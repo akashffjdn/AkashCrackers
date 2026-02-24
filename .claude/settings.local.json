@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create vite@latest . -- --template react-ts)",
+      "Bash(npm install)",
+      "WebFetch(domain:www.fireworks.com)",
+      "WebFetch(domain:www.epicfireworks.com)",
+      "WebFetch(domain:www.uline.com)"
+    ]
+  }
+}
