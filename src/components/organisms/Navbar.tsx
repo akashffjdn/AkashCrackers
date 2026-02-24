@@ -1,22 +1,37 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ShoppingBag, Search, ChevronDown } from 'lucide-react';
+import { Menu, X, ShoppingBag, Search, ChevronDown, User, LogOut, Package, Heart } from 'lucide-react';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle.tsx';
 import { Container } from '@/components/atoms/Container.tsx';
+import { Avatar } from '@/components/atoms/Avatar.tsx';
+import { UserDropdown } from '@/components/molecules/UserDropdown.tsx';
 import { useScrollDirection } from '@/hooks/useScrollDirection.ts';
 import { useCartStore } from '@/store/cart.ts';
+import { useAuthStore } from '@/store/auth.ts';
+import { signOutUser } from '@/services/auth.ts';
 import { mainNavLinks } from '@/config/navigation.ts';
 import { siteConfig } from '@/config/site.ts';
 import { cn } from '@/lib/utils.ts';
+import logoImg from '@/assets/images/logo_crackers.png';
 
 export function Navbar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const { isAtTop } = useScrollDirection();
   const location = useLocation();
   const totalItems = useCartStore((s) => s.totalItems());
   const openCart = useCartStore((s) => s.openCart);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
+
+  const handleSignOut = async () => {
+    await signOutUser();
+    logout();
+    setIsMobileOpen(false);
+  };
 
   const isHome = location.pathname === '/';
   const isTransparent = isHome && isAtTop;
@@ -39,9 +54,7 @@ export function Navbar() {
               className="flex items-center gap-2 z-10"
               onClick={() => setIsMobileOpen(false)}
             >
-              <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-                <span className="font-display font-black text-surface-950 text-sm">A</span>
-              </div>
+              <img src={logoImg} alt={siteConfig.name} className="w-8 h-8 rounded-lg object-contain" />
               <span
                 className={cn(
                   'font-display font-bold text-heading-sm transition-colors',
@@ -122,6 +135,42 @@ export function Navbar() {
                   isTransparent && 'text-white/80 hover:text-white hover:bg-white/10',
                 )}
               />
+
+              {/* User / Auth */}
+              {isAuthenticated && user ? (
+                <div className="relative hidden lg:block">
+                  <button
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className={cn(
+                      'flex items-center justify-center w-10 h-10 rounded-xl transition-colors overflow-hidden',
+                      isTransparent
+                        ? 'text-white/80 hover:text-white hover:bg-white/10'
+                        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800',
+                    )}
+                    aria-label="Account menu"
+                  >
+                    <Avatar src={user.photoURL} name={user.displayName} size="sm" />
+                  </button>
+                  <AnimatePresence>
+                    {isUserDropdownOpen && (
+                      <UserDropdown isOpen={isUserDropdownOpen} onClose={() => setIsUserDropdownOpen(false)} />
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className={cn(
+                    'hidden lg:flex items-center justify-center w-10 h-10 rounded-xl transition-colors',
+                    isTransparent
+                      ? 'text-white/80 hover:text-white hover:bg-white/10'
+                      : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800',
+                  )}
+                  aria-label="Sign in"
+                >
+                  <User size={20} />
+                </Link>
+              )}
 
               {/* Cart */}
               <button
@@ -224,7 +273,56 @@ export function Navbar() {
                   ))}
                 </div>
 
+                {/* Mobile Auth Section */}
                 <div className="mt-8 pt-8 border-t border-surface-200 dark:border-surface-800">
+                  {isAuthenticated && user ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3 px-4 py-3 mb-2">
+                        <Avatar src={user.photoURL} name={user.displayName} size="md" />
+                        <div className="min-w-0">
+                          <p className="font-display font-semibold text-body-md text-surface-900 dark:text-surface-50 truncate">
+                            {user.displayName || 'User'}
+                          </p>
+                          <p className="text-caption text-surface-400 truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <Link to="/account" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-body-sm text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+                        <User size={18} className="text-surface-400" /> My Account
+                      </Link>
+                      <Link to="/account/orders" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-body-sm text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+                        <Package size={18} className="text-surface-400" /> Orders
+                      </Link>
+                      <Link to="/account/wishlist" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-body-sm text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+                        <Heart size={18} className="text-surface-400" /> Wishlist
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-body-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                      >
+                        <LogOut size={18} /> Sign Out
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Link
+                        to="/login"
+                        onClick={() => setIsMobileOpen(false)}
+                        className="block w-full px-4 py-3 rounded-xl text-center text-body-md font-semibold bg-brand-500 text-surface-950 hover:bg-brand-600 transition-colors"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        to="/signup"
+                        onClick={() => setIsMobileOpen(false)}
+                        className="block w-full px-4 py-3 rounded-xl text-center text-body-md font-semibold border border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-850 transition-colors"
+                      >
+                        Create Account
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-surface-200 dark:border-surface-800">
                   <p className="text-body-sm text-surface-500 dark:text-surface-400">
                     {siteConfig.contact.phone}
                   </p>

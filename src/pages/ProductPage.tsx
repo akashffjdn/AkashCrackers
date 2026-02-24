@@ -72,26 +72,22 @@ export function ProductPage() {
     .slice(0, 4);
 
   return (
-    <div className="pt-20 lg:pt-24">
-      {/* Breadcrumbs */}
-      <div className="bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
-        <Container size="wide">
-          <nav className="flex items-center gap-2 py-4 text-body-sm text-surface-500">
-            <Link to="/" className="hover:text-brand-500 transition-colors">Home</Link>
-            <ChevronRight size={14} />
-            <Link to="/shop" className="hover:text-brand-500 transition-colors">Shop</Link>
-            <ChevronRight size={14} />
-            <Link to={`/shop?category=${product.category}`} className="hover:text-brand-500 transition-colors capitalize">
-              {product.category.replace('-', ' ')}
-            </Link>
-            <ChevronRight size={14} />
-            <span className="text-surface-900 dark:text-surface-100 font-medium">{product.name}</span>
-          </nav>
-        </Container>
-      </div>
-
+    <div className="pt-16 lg:pt-18">
       <Container size="wide">
-        <div className="py-8 lg:py-16">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 pt-6 pb-2 text-body-sm text-surface-400">
+          <Link to="/" className="hover:text-brand-500 transition-colors">Home</Link>
+          <ChevronRight size={12} />
+          <Link to="/shop" className="hover:text-brand-500 transition-colors">Shop</Link>
+          <ChevronRight size={12} />
+          <Link to={`/shop?category=${product.category}`} className="hover:text-brand-500 transition-colors capitalize">
+            {product.category.replace('-', ' ')}
+          </Link>
+          <ChevronRight size={12} />
+          <span className="text-surface-600 dark:text-surface-300">{product.name}</span>
+        </nav>
+
+        <div className="py-6 lg:py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
             {/* Image Gallery */}
             <motion.div

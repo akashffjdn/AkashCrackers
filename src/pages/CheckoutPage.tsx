@@ -1,17 +1,29 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Lock, Truck, CreditCard, CheckCircle } from 'lucide-react';
+import { Lock, Truck, CreditCard, CheckCircle, ShieldCheck, Wallet, AlertCircle } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
 import { useCartStore } from '@/store/cart.ts';
+import { useAuthStore } from '@/store/auth.ts';
+import { useRazorpay } from '@/hooks/useRazorpay.ts';
+import { createOrder } from '@/services/firestore.ts';
+import { siteConfig } from '@/config/site.ts';
 import { formatPrice, cn } from '@/lib/utils.ts';
+import type { OrderItem } from '@/types/index.ts';
 
 type CheckoutStep = 'information' | 'shipping' | 'payment';
 
 export function CheckoutPage() {
-  const { items, totalPrice, totalSavings } = useCartStore();
+  const { items, totalPrice, totalSavings, clearCart } = useCartStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+  const { isLoading: isRazorpayLoading, isProcessing, error: paymentError, openPayment } = useRazorpay();
+
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('information');
+  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -23,6 +35,9 @@ export function CheckoutPage() {
     pincode: '',
   });
 
+  const shippingCost = shippingMethod === 'express' ? 199 : 0;
+  const orderTotal = totalPrice() + shippingCost;
+
   const steps: { id: CheckoutStep; label: string; icon: typeof Lock }[] = [
     { id: 'information', label: 'Information', icon: Lock },
     { id: 'shipping', label: 'Shipping', icon: Truck },
@@ -32,7 +47,39 @@ export function CheckoutPage() {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.email.trim()) errors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      errors.email = 'Invalid email address';
+
+    if (!formData.firstName.trim()) errors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
+    if (!formData.phone.trim()) errors.phone = 'Phone is required';
+    else if (!/^[6-9]\d{9}$/.test(formData.phone.replace(/\s/g, '')))
+      errors.phone = 'Enter a valid 10-digit phone number';
+
+    if (!formData.address.trim()) errors.address = 'Address is required';
+    if (!formData.city.trim()) errors.city = 'City is required';
+    if (!formData.state.trim()) errors.state = 'State is required';
+    if (!formData.pincode.trim()) errors.pincode = 'PIN code is required';
+    else if (!/^\d{6}$/.test(formData.pincode))
+      errors.pincode = 'Enter a valid 6-digit PIN code';
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleNext = () => {
@@ -47,6 +94,89 @@ export function CheckoutPage() {
     if (prevIndex >= 0) {
       setCurrentStep(steps[prevIndex].id);
     }
+  };
+
+  const handlePayment = async () => {
+    if (!validateForm()) {
+      if (formErrors.email || formErrors.firstName || formErrors.lastName || formErrors.phone) {
+        setCurrentStep('information');
+      } else {
+        setCurrentStep('shipping');
+      }
+      return;
+    }
+
+    if (!isAuthenticated || !user) {
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+
+    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKeyId) {
+      setFormErrors({ submit: 'Payment gateway is not configured.' });
+      return;
+    }
+
+    await openPayment({
+      key: razorpayKeyId,
+      amount: orderTotal * 100,
+      currency: 'INR',
+      name: siteConfig.name,
+      description: `Order — ${items.length} item${items.length > 1 ? 's' : ''}`,
+      prefill: {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        contact: formData.phone,
+      },
+      theme: {
+        color: '#F59E0B',
+      },
+      handler: async (response) => {
+        setIsSubmitting(true);
+        try {
+          const orderItems: OrderItem[] = items.map((item) => ({
+            productId: item.product.id,
+            name: item.product.name,
+            slug: item.product.slug,
+            image: item.product.images[0],
+            price: item.product.price,
+            quantity: item.quantity,
+          }));
+
+          const orderId = await createOrder(user.uid, {
+            userId: user.uid,
+            items: orderItems,
+            subtotal: totalPrice(),
+            shipping: shippingCost,
+            total: orderTotal,
+            status: 'pending',
+            shippingAddress: {
+              id: '',
+              label: 'Checkout',
+              fullName: `${formData.firstName} ${formData.lastName}`,
+              phone: formData.phone,
+              addressLine1: formData.address,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+              isDefault: false,
+            },
+            paymentMethod: 'Razorpay',
+            paymentId: response.razorpay_payment_id,
+          });
+
+          clearCart();
+          navigate(`/order-confirmation/${orderId}`);
+        } catch {
+          setFormErrors({ submit: 'Failed to create order. Please contact support.' });
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+      modal: {
+        confirm_close: true,
+      },
+    });
   };
 
   if (items.length === 0) {
@@ -77,20 +207,20 @@ export function CheckoutPage() {
     'transition-colors',
   );
 
+  const errorInputClass = cn(
+    'w-full px-4 py-3 rounded-xl text-body-md',
+    'bg-white dark:bg-surface-850',
+    'border border-red-500',
+    'text-surface-900 dark:text-surface-100',
+    'placeholder:text-surface-400 dark:placeholder:text-surface-500',
+    'focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500',
+    'transition-colors',
+  );
+
+  const getInputClass = (field: string) => formErrors[field] ? errorInputClass : inputClass;
+
   return (
-    <div className="pt-20 lg:pt-24 min-h-screen bg-surface-50 dark:bg-surface-950">
-      {/* Breadcrumbs */}
-      <div className="bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
-        <Container size="wide">
-          <nav className="flex items-center gap-2 py-4 text-body-sm text-surface-500">
-            <Link to="/" className="hover:text-brand-500 transition-colors">Home</Link>
-            <ChevronRight size={14} />
-            <Link to="/shop" className="hover:text-brand-500 transition-colors">Shop</Link>
-            <ChevronRight size={14} />
-            <span className="text-surface-900 dark:text-surface-100 font-medium">Checkout</span>
-          </nav>
-        </Container>
-      </div>
+    <div className="pt-16 lg:pt-18 min-h-screen bg-surface-50 dark:bg-surface-950">
 
       <Container size="wide">
         <div className="py-8 lg:py-12">
@@ -141,12 +271,24 @@ export function CheckoutPage() {
                       Contact Information
                     </h2>
                     <div className="space-y-4">
-                      <input name="email" type="email" placeholder="Email address" value={formData.email} onChange={handleInputChange} className={inputClass} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <input name="firstName" placeholder="First name" value={formData.firstName} onChange={handleInputChange} className={inputClass} />
-                        <input name="lastName" placeholder="Last name" value={formData.lastName} onChange={handleInputChange} className={inputClass} />
+                      <div>
+                        <input name="email" type="email" placeholder="Email address" value={formData.email} onChange={handleInputChange} className={getInputClass('email')} />
+                        {formErrors.email && <p className="mt-1 text-caption text-red-500">{formErrors.email}</p>}
                       </div>
-                      <input name="phone" type="tel" placeholder="Phone number" value={formData.phone} onChange={handleInputChange} className={inputClass} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <input name="firstName" placeholder="First name" value={formData.firstName} onChange={handleInputChange} className={getInputClass('firstName')} />
+                          {formErrors.firstName && <p className="mt-1 text-caption text-red-500">{formErrors.firstName}</p>}
+                        </div>
+                        <div>
+                          <input name="lastName" placeholder="Last name" value={formData.lastName} onChange={handleInputChange} className={getInputClass('lastName')} />
+                          {formErrors.lastName && <p className="mt-1 text-caption text-red-500">{formErrors.lastName}</p>}
+                        </div>
+                      </div>
+                      <div>
+                        <input name="phone" type="tel" placeholder="Phone number" value={formData.phone} onChange={handleInputChange} className={getInputClass('phone')} />
+                        {formErrors.phone && <p className="mt-1 text-caption text-red-500">{formErrors.phone}</p>}
+                      </div>
                     </div>
                   </>
                 )}
@@ -157,29 +299,62 @@ export function CheckoutPage() {
                       Shipping Address
                     </h2>
                     <div className="space-y-4">
-                      <input name="address" placeholder="Street address" value={formData.address} onChange={handleInputChange} className={inputClass} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <input name="city" placeholder="City" value={formData.city} onChange={handleInputChange} className={inputClass} />
-                        <input name="state" placeholder="State" value={formData.state} onChange={handleInputChange} className={inputClass} />
+                      <div>
+                        <input name="address" placeholder="Street address" value={formData.address} onChange={handleInputChange} className={getInputClass('address')} />
+                        {formErrors.address && <p className="mt-1 text-caption text-red-500">{formErrors.address}</p>}
                       </div>
-                      <input name="pincode" placeholder="PIN Code" value={formData.pincode} onChange={handleInputChange} className={inputClass} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <input name="city" placeholder="City" value={formData.city} onChange={handleInputChange} className={getInputClass('city')} />
+                          {formErrors.city && <p className="mt-1 text-caption text-red-500">{formErrors.city}</p>}
+                        </div>
+                        <div>
+                          <input name="state" placeholder="State" value={formData.state} onChange={handleInputChange} className={getInputClass('state')} />
+                          {formErrors.state && <p className="mt-1 text-caption text-red-500">{formErrors.state}</p>}
+                        </div>
+                      </div>
+                      <div>
+                        <input name="pincode" placeholder="PIN Code" value={formData.pincode} onChange={handleInputChange} className={getInputClass('pincode')} />
+                        {formErrors.pincode && <p className="mt-1 text-caption text-red-500">{formErrors.pincode}</p>}
+                      </div>
                     </div>
 
                     <div className="mt-6 p-4 rounded-xl bg-surface-50 dark:bg-surface-850 border border-surface-200 dark:border-surface-800">
                       <p className="text-body-sm font-semibold text-surface-900 dark:text-surface-100">Shipping Method</p>
                       <div className="mt-3 space-y-2">
-                        <label className="flex items-center justify-between p-3 rounded-lg border border-brand-500 bg-brand-500/5 cursor-pointer">
+                        <label
+                          onClick={() => setShippingMethod('standard')}
+                          className={cn(
+                            'flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors',
+                            shippingMethod === 'standard'
+                              ? 'border-brand-500 bg-brand-500/5'
+                              : 'border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600',
+                          )}
+                        >
                           <div className="flex items-center gap-3">
                             <div className="w-4 h-4 rounded-full border-2 border-brand-500 flex items-center justify-center">
-                              <div className="w-2 h-2 rounded-full bg-brand-500" />
+                              {shippingMethod === 'standard' && <div className="w-2 h-2 rounded-full bg-brand-500" />}
                             </div>
                             <span className="text-body-sm font-medium text-surface-900 dark:text-surface-100">Standard Delivery (5-7 days)</span>
                           </div>
                           <span className="text-body-sm font-bold text-brand-500">FREE</span>
                         </label>
-                        <label className="flex items-center justify-between p-3 rounded-lg border border-surface-200 dark:border-surface-700 cursor-pointer hover:border-surface-300 dark:hover:border-surface-600 transition-colors">
+                        <label
+                          onClick={() => setShippingMethod('express')}
+                          className={cn(
+                            'flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors',
+                            shippingMethod === 'express'
+                              ? 'border-brand-500 bg-brand-500/5'
+                              : 'border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600',
+                          )}
+                        >
                           <div className="flex items-center gap-3">
-                            <div className="w-4 h-4 rounded-full border-2 border-surface-300 dark:border-surface-600" />
+                            <div className={cn(
+                              'w-4 h-4 rounded-full border-2 flex items-center justify-center',
+                              shippingMethod === 'express' ? 'border-brand-500' : 'border-surface-300 dark:border-surface-600',
+                            )}>
+                              {shippingMethod === 'express' && <div className="w-2 h-2 rounded-full bg-brand-500" />}
+                            </div>
                             <span className="text-body-sm font-medium text-surface-700 dark:text-surface-300">Express Delivery (2-3 days)</span>
                           </div>
                           <span className="text-body-sm font-bold text-surface-700 dark:text-surface-300">{formatPrice(199)}</span>
@@ -194,28 +369,54 @@ export function CheckoutPage() {
                     <h2 className="font-display font-bold text-heading-md text-surface-900 dark:text-surface-50 mb-6">
                       Payment
                     </h2>
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-xl border border-brand-500/30 bg-brand-500/5">
-                        <div className="flex items-center gap-3 mb-4">
-                          <CreditCard size={20} className="text-brand-500" />
-                          <span className="text-body-md font-semibold text-surface-900 dark:text-surface-100">Card Payment</span>
-                        </div>
-                        <div className="space-y-4">
-                          <input placeholder="Card number" className={inputClass} />
-                          <div className="grid grid-cols-2 gap-4">
-                            <input placeholder="MM / YY" className={inputClass} />
-                            <input placeholder="CVV" className={inputClass} />
+
+                    {/* Razorpay payment option */}
+                    <div className="p-5 rounded-xl border-2 border-brand-500 bg-brand-500/5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-4 h-4 rounded-full border-2 border-brand-500 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-brand-500" />
                           </div>
-                          <input placeholder="Name on card" className={inputClass} />
+                          <Wallet size={20} className="text-brand-500" />
+                          <span className="text-body-md font-semibold text-surface-900 dark:text-surface-100">
+                            Pay with Razorpay
+                          </span>
                         </div>
+                        <span className="px-2.5 py-1 rounded-lg bg-brand-500/10 text-caption font-bold text-brand-600 dark:text-brand-400">
+                          RECOMMENDED
+                        </span>
                       </div>
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-surface-50 dark:bg-surface-850">
-                        <Lock size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-body-sm text-surface-500">
-                          Your payment info is encrypted and secure. We never store your card details.
+                      <p className="text-body-sm text-surface-500 ml-10">
+                        Cards, UPI, Net Banking, Wallets &mdash; all payment methods in one secure checkout.
+                      </p>
+                    </div>
+
+                    {/* Payment method icons */}
+                    <div className="mt-4 flex items-center gap-3 px-1">
+                      {['UPI', 'Visa', 'Mastercard', 'Net Banking', 'Wallets'].map((method) => (
+                        <span key={method} className="px-2.5 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-850 text-caption font-medium text-surface-500">
+                          {method}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Security note */}
+                    <div className="mt-4 flex items-start gap-3 p-4 rounded-xl bg-surface-50 dark:bg-surface-850">
+                      <ShieldCheck size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-body-sm text-surface-500">
+                        Payment is processed securely by Razorpay. Your financial details are never shared with us.
+                      </p>
+                    </div>
+
+                    {/* Error display */}
+                    {(paymentError || formErrors.submit) && (
+                      <div className="mt-4 flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                        <AlertCircle size={16} className="text-red-500 flex-shrink-0" />
+                        <p className="text-body-sm text-red-600 dark:text-red-400">
+                          {paymentError || formErrors.submit}
                         </p>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
 
@@ -232,9 +433,18 @@ export function CheckoutPage() {
                     <div />
                   )}
                   {currentStep === 'payment' ? (
-                    <Button size="lg" onClick={() => alert('Order placed! (Demo)')}>
+                    <Button
+                      size="lg"
+                      onClick={handlePayment}
+                      isLoading={isRazorpayLoading || isProcessing || isSubmitting}
+                      disabled={isRazorpayLoading || isProcessing || isSubmitting}
+                    >
                       <Lock size={16} />
-                      Pay {formatPrice(totalPrice())}
+                      {isProcessing
+                        ? 'Processing...'
+                        : isSubmitting
+                          ? 'Creating Order...'
+                          : `Pay ${formatPrice(orderTotal)}`}
                     </Button>
                   ) : (
                     <Button size="lg" onClick={handleNext}>
@@ -285,11 +495,18 @@ export function CheckoutPage() {
                   )}
                   <div className="flex justify-between text-body-sm text-surface-500">
                     <span>Shipping</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">FREE</span>
+                    <span className={cn(
+                      'font-medium',
+                      shippingCost === 0
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-surface-900 dark:text-surface-100',
+                    )}>
+                      {shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}
+                    </span>
                   </div>
                   <div className="flex justify-between pt-3 border-t border-surface-200 dark:border-surface-800">
                     <span className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">Total</span>
-                    <span className="font-display font-bold text-heading-sm text-brand-600 dark:text-brand-400">{formatPrice(totalPrice())}</span>
+                    <span className="font-display font-bold text-heading-sm text-brand-600 dark:text-brand-400">{formatPrice(orderTotal)}</span>
                   </div>
                 </div>
               </div>

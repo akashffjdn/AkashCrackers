@@ -26,8 +26,8 @@ export const mainNavLinks: NavLink[] = [
       { label: 'Professional Grade', href: '/shop?occasion=professional' },
     ],
   },
+  { label: 'Quick Order', href: '/quick-order' },
   { label: 'New Arrivals', href: '/shop?filter=new' },
-  { label: 'Best Sellers', href: '/shop?filter=bestseller' },
   { label: 'About', href: '/about' },
 ];
 

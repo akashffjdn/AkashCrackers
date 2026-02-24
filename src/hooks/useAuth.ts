@@ -1,0 +1,29 @@
+import { useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase.ts';
+import { useAuthStore } from '@/store/auth.ts';
+import { mapFirebaseUser } from '@/services/auth.ts';
+import { createUserProfile, getUserProfile } from '@/services/firestore.ts';
+
+export function useAuthListener() {
+  const setUser = useAuthStore((s) => s.setUser);
+  const setLoading = useAuthStore((s) => s.setLoading);
+
+  useEffect(() => {
+    setLoading(true);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const profile = mapFirebaseUser(firebaseUser);
+        // Create Firestore profile if first login
+        const existing = await getUserProfile(profile.uid).catch(() => null);
+        if (!existing) {
+          await createUserProfile(profile).catch(() => {});
+        }
+        setUser(existing ?? profile);
+      } else {
+        setUser(null);
+      }
+    });
+    return unsubscribe;
+  }, [setUser, setLoading]);
+}

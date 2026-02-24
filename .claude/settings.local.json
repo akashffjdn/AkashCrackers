@@ -5,7 +5,8 @@
       "Bash(npm install)",
       "WebFetch(domain:www.fireworks.com)",
       "WebFetch(domain:www.epicfireworks.com)",
-      "WebFetch(domain:www.uline.com)"
+      "WebFetch(domain:www.uline.com)",
+      "Bash(npm run build)"
     ]
   }
 }

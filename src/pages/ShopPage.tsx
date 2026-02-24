@@ -54,9 +54,9 @@ export function ShopPage() {
   }, [activeCategory, sortBy]);
 
   return (
-    <div className="pt-20 lg:pt-24">
+    <div className="pt-16 lg:pt-18">
       {/* Page Header */}
-      <section className="py-12 lg:py-16 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+      <section className="pt-8 pb-10 lg:pt-10 lg:pb-14 bg-white dark:bg-surface-900">
         <Container size="wide">
           <SectionHeading
             eyebrow="Our Collection"
@@ -66,7 +66,7 @@ export function ShopPage() {
         </Container>
       </section>
 
-      <section className="section-padding bg-surface-50 dark:bg-surface-950">
+      <section className="py-10 lg:py-14 bg-surface-50 dark:bg-surface-950">
         <Container size="wide">
           {/* Filters Bar */}
           <div className="mb-8 space-y-4">

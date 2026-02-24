@@ -3,6 +3,7 @@ import { Container } from '@/components/atoms/Container.tsx';
 import { siteConfig } from '@/config/site.ts';
 import { footerLinks } from '@/config/navigation.ts';
 import { Instagram, Facebook, Youtube, Phone, Mail, MapPin } from 'lucide-react';
+import logoImg from '@/assets/images/logo_crackers.png';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,14 +12,12 @@ export function Footer() {
     <footer className="bg-surface-100 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-800">
       {/* Main Footer */}
       <Container size="wide">
-        <div className="section-padding">
+        <div className="py-10 lg:py-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <Link to="/" className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-                  <span className="font-display font-black text-surface-950 text-sm">A</span>
-                </div>
+                <img src={logoImg} alt={siteConfig.name} className="w-8 h-8 rounded-lg object-contain" />
                 <span className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">
                   {siteConfig.name}
                 </span>
@@ -73,7 +72,7 @@ export function Footer() {
           </div>
 
           {/* Contact Bar */}
-          <div className="mt-12 pt-8 border-t border-surface-200 dark:border-surface-800">
+          <div className="mt-8 pt-6 border-t border-surface-200 dark:border-surface-800">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               {[
                 { icon: Phone, text: siteConfig.contact.phone },
