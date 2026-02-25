@@ -1,6 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import { siteConfig } from '@/config/site.ts';
-import logoImg from '@/assets/images/logo_crackers.png';
+import logoImg from '@/assets/images/logo_crackers_optimized.png';
 
 export function AuthLayout() {
   return (

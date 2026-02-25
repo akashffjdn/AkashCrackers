@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw,
@@ -11,6 +11,8 @@ import { Badge } from '@/components/atoms/Badge.tsx';
 import { StarRating } from '@/components/atoms/StarRating.tsx';
 import { QuantitySelector } from '@/components/atoms/QuantitySelector.tsx';
 import { ProductCard } from '@/components/molecules/ProductCard.tsx';
+import { SEO } from '@/components/SEO.tsx';
+import { productSchema, breadcrumbSchema } from '@/lib/seo.ts';
 import { useCartStore } from '@/store/cart.ts';
 import { useAuthStore } from '@/store/auth.ts';
 import { useWishlistStore } from '@/store/wishlist.ts';
@@ -119,8 +121,26 @@ export function ProductPage() {
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
+  const jsonLd = useMemo(() => [
+    productSchema(product),
+    breadcrumbSchema([
+      { name: 'Home', url: '/' },
+      { name: 'Shop', url: '/shop' },
+      { name: product.category.replace('-', ' '), url: `/shop?category=${product.category}` },
+      { name: product.name, url: `/product/${product.slug}` },
+    ]),
+  ], [product]);
+
   return (
     <div className="pt-16 lg:pt-18">
+      <SEO
+        title={`${product.name} — Buy ${product.category.replace('-', ' ')} Fireworks Online`}
+        description={product.shortDescription ?? product.description.slice(0, 160)}
+        canonical={`/product/${product.slug}`}
+        ogImage={product.images[0]}
+        ogType="product"
+        jsonLd={jsonLd}
+      />
       <Container size="wide">
         {/* Breadcrumbs — mobile: compact back link */}
         <Link

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { User, Package, Heart, MapPin, Settings, LogOut } from 'lucide-react';
 import { Avatar } from '@/components/atoms/Avatar.tsx';
 import { useAuthStore } from '@/store/auth.ts';
-import { signOutUser } from '@/services/auth.ts';
+// signOutUser is dynamically imported to keep Firebase out of the initial bundle
 
 interface UserDropdownProps {
   isOpen: boolean;
@@ -35,6 +35,7 @@ export function UserDropdown({ isOpen, onClose }: UserDropdownProps) {
   }, [isOpen, onClose]);
 
   const handleSignOut = async () => {
+    const { signOutUser } = await import('@/services/auth.ts');
     await signOutUser();
     logout();
     onClose();

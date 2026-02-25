@@ -13,11 +13,11 @@ import { UserDropdown } from '@/components/molecules/UserDropdown.tsx';
 import { useScrollDirection } from '@/hooks/useScrollDirection.ts';
 import { useCartStore } from '@/store/cart.ts';
 import { useAuthStore } from '@/store/auth.ts';
-import { signOutUser } from '@/services/auth.ts';
+// signOutUser is dynamically imported to keep Firebase out of the initial bundle
 import { mainNavLinks } from '@/config/navigation.ts';
 import { siteConfig } from '@/config/site.ts';
 import { cn } from '@/lib/utils.ts';
-import logoImg from '@/assets/images/logo_crackers.png';
+import logoImg from '@/assets/images/logo_crackers_optimized.png';
 
 // Icon map for mobile drawer nav links
 const navIcons: Record<string, React.ReactNode> = {
@@ -52,6 +52,7 @@ export function Navbar() {
   const logout = useAuthStore((s) => s.logout);
 
   const handleSignOut = async () => {
+    const { signOutUser } = await import('@/services/auth.ts');
     await signOutUser();
     logout();
     setIsMobileOpen(false);
@@ -78,7 +79,7 @@ export function Navbar() {
               className="flex items-center gap-2 z-10"
               onClick={() => setIsMobileOpen(false)}
             >
-              <img src={logoImg} alt={siteConfig.name} className="w-8 h-8 rounded-lg object-contain" />
+              <img src={logoImg} alt={siteConfig.name} width={32} height={32} className="w-8 h-8 rounded-lg object-contain" />
               <span
                 className={cn(
                   'font-display font-bold text-heading-sm transition-colors',

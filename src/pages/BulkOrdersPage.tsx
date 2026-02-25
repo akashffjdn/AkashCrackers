@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
+import { SEO } from '@/components/SEO.tsx';
 import { cn } from '@/lib/utils.ts';
 
 const benefits = [
@@ -48,6 +49,11 @@ export function BulkOrdersPage() {
 
   return (
     <div className="pt-16 lg:pt-18 min-h-screen">
+      <SEO
+        title="Bulk & Wholesale Fireworks Orders — Up to 30% Off"
+        description="Order fireworks in bulk for weddings, Diwali, corporate events, and retail. Wholesale pricing up to 30% off, custom packages, and dedicated account manager."
+        canonical="/bulk-orders"
+      />
       {/* Hero */}
       <section className="relative py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1920&q=30')] bg-cover bg-center opacity-10" />

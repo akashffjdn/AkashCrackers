@@ -1,8 +1,14 @@
 import { PolicyLayout, PolicySection } from '@/components/atoms/PolicyLayout.tsx';
+import { SEO } from '@/components/SEO.tsx';
 
 export function PrivacyPage() {
   return (
     <PolicyLayout title="Privacy Policy" eyebrow="Your Privacy" lastUpdated="February 1, 2026">
+      <SEO
+        title="Privacy Policy"
+        description="Akash Crackers privacy policy. Learn how we collect, use, and protect your personal information when you use our website and services."
+        canonical="/privacy"
+      />
       <PolicySection title="Introduction">
         <p>Akash Crackers ("we", "our", "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy describes how we collect, use, and protect information when you visit our website (akashcrackers.com) or make a purchase.</p>
         <p>By using our services, you consent to the data practices described in this policy.</p>

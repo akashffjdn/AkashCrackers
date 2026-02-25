@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
+import { SEO } from '@/components/SEO.tsx';
+import { localBusinessSchema } from '@/lib/seo.ts';
 import { siteConfig } from '@/config/site.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -70,6 +72,12 @@ export function ContactPage() {
 
   return (
     <div className="pt-16 lg:pt-18 min-h-screen">
+      <SEO
+        title="Contact Us — Akash Crackers Support & Inquiries"
+        description="Get in touch with Akash Crackers. Call +91 98765 43210, email hello@akashcrackers.com, or visit us in Sivakasi, Tamil Nadu. Mon-Sat 9AM-8PM IST."
+        canonical="/contact"
+        jsonLd={localBusinessSchema()}
+      />
       {/* Header */}
       <section className="pt-8 pb-10 lg:pt-10 lg:pb-14 bg-white dark:bg-surface-900">
         <Container size="wide">

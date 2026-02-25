@@ -1,8 +1,14 @@
 import { PolicyLayout, PolicySection } from '@/components/atoms/PolicyLayout.tsx';
+import { SEO } from '@/components/SEO.tsx';
 
 export function TermsPage() {
   return (
     <PolicyLayout title="Terms of Service" eyebrow="Legal" lastUpdated="February 1, 2026">
+      <SEO
+        title="Terms of Service"
+        description="Akash Crackers terms of service. Read our policies on eligibility, ordering, payments, shipping, and usage of our website and services."
+        canonical="/terms"
+      />
       <PolicySection title="Agreement to Terms">
         <p>By accessing and using the Akash Crackers website (akashcrackers.com) and services, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please do not use our website or services.</p>
       </PolicySection>

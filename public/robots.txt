@@ -1,0 +1,16 @@
+# Akash Crackers — robots.txt
+User-agent: *
+Allow: /
+
+# Disallow private/auth routes
+Disallow: /account
+Disallow: /account/*
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /checkout
+Disallow: /order-confirmation
+
+# Sitemap
+Sitemap: https://akashcrackers.com/sitemap.xml

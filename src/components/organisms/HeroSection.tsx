@@ -9,8 +9,15 @@ export function HeroSection() {
       {/* Background */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=85"
+          src="https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=80"
+          srcSet="https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=640&q=75 640w, https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1024&q=80 1024w, https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=80 1920w"
+          sizes="100vw"
           alt="Fireworks display"
+          width={1920}
+          height={1280}
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />

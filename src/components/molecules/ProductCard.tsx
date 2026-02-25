@@ -70,6 +70,9 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               src={product.images[0]}
               alt={product.name}
               loading="lazy"
+              decoding="async"
+              width={400}
+              height={300}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
 

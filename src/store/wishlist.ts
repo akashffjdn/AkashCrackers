@@ -1,9 +1,4 @@
 import { create } from 'zustand';
-import {
-  getWishlist,
-  addToWishlist as addToWishlistDB,
-  removeFromWishlist as removeFromWishlistDB,
-} from '@/services/firestore.ts';
 
 interface WishlistState {
   items: Set<string>;
@@ -22,12 +17,16 @@ interface WishlistState {
   clear: () => void;
 }
 
+// Lazy-load Firestore functions to keep Firebase out of the initial bundle
+const getFirestoreModule = () => import('@/services/firestore.ts');
+
 export const useWishlistStore = create<WishlistState>()((set, get) => ({
   items: new Set<string>(),
   isLoaded: false,
 
   fetchWishlist: async (uid) => {
     try {
+      const { getWishlist } = await getFirestoreModule();
       const list = await getWishlist(uid);
       set({ items: new Set(list.map((i) => i.productId)), isLoaded: true });
     } catch {
@@ -38,12 +37,12 @@ export const useWishlistStore = create<WishlistState>()((set, get) => ({
   toggle: async (uid, productId) => {
     const { items } = get();
     const next = new Set(items);
+    const { addToWishlist, removeFromWishlist } = await getFirestoreModule();
 
     if (next.has(productId)) {
       next.delete(productId);
       set({ items: next });
-      await removeFromWishlistDB(uid, productId).catch(() => {
-        // rollback on error
+      await removeFromWishlist(uid, productId).catch(() => {
         const rollback = new Set(get().items);
         rollback.add(productId);
         set({ items: rollback });
@@ -51,8 +50,7 @@ export const useWishlistStore = create<WishlistState>()((set, get) => ({
     } else {
       next.add(productId);
       set({ items: next });
-      await addToWishlistDB(uid, productId).catch(() => {
-        // rollback on error
+      await addToWishlist(uid, productId).catch(() => {
         const rollback = new Set(get().items);
         rollback.delete(productId);
         set({ items: rollback });

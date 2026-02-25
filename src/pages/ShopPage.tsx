@@ -6,6 +6,7 @@ import { Container } from '@/components/atoms/Container.tsx';
 import { SectionHeading } from '@/components/atoms/SectionHeading.tsx';
 import { CategoryChip } from '@/components/molecules/CategoryChip.tsx';
 import { ProductCard } from '@/components/molecules/ProductCard.tsx';
+import { SEO } from '@/components/SEO.tsx';
 import { products, categories } from '@/data/products.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -55,6 +56,11 @@ export function ShopPage() {
 
   return (
     <div className="pt-16 lg:pt-18">
+      <SEO
+        title="Shop Premium Fireworks Online — Aerial Shells, Rockets, Sparklers"
+        description="Browse our complete collection of BIS-certified fireworks. Aerial shells, rockets, sparklers, fountains, Roman candles, and combo packs with free shipping above ₹999."
+        canonical="/shop"
+      />
       {/* Page Header */}
       <section className="pt-8 pb-10 lg:pt-10 lg:pb-14 bg-white dark:bg-surface-900">
         <Container size="wide">

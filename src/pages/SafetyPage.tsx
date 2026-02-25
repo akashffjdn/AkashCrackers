@@ -4,6 +4,7 @@ import {
   Droplets, MapPin, Phone, Heart, CheckCircle, XCircle,
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
+import { SEO } from '@/components/SEO.tsx';
 import { siteConfig } from '@/config/site.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -46,6 +47,11 @@ const emergencySteps = [
 export function SafetyPage() {
   return (
     <div className="pt-16 lg:pt-18 min-h-screen">
+      <SEO
+        title="Fireworks Safety Guidelines — Do's, Don'ts & First Aid"
+        description="Essential fireworks safety guidelines from Akash Crackers. Learn proper handling, storage, safety ratings, emergency first aid, and important dos and don'ts."
+        canonical="/safety"
+      />
       {/* Hero */}
       <section className="relative py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=30')] bg-cover bg-center opacity-10" />

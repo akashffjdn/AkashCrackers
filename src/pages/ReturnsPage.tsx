@@ -1,8 +1,14 @@
 import { PolicyLayout, PolicySection } from '@/components/atoms/PolicyLayout.tsx';
+import { SEO } from '@/components/SEO.tsx';
 
 export function ReturnsPage() {
   return (
     <PolicyLayout title="Return Policy" eyebrow="Returns & Refunds" lastUpdated="February 1, 2026">
+      <SEO
+        title="Return & Refund Policy — 7-Day Easy Returns"
+        description="Akash Crackers return policy. 7-day easy returns for unopened products, free replacement for damaged items, and refunds within 5-7 business days."
+        canonical="/returns"
+      />
       <PolicySection title="Our Return Promise">
         <p>At Akash Crackers, customer satisfaction is paramount. If you're not happy with your purchase, we make returns simple and hassle-free. We stand behind the quality of every product we sell.</p>
       </PolicySection>

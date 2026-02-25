@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Truck, Clock, MapPin } from 'lucide-react';
 import { PolicyLayout, PolicySection } from '@/components/atoms/PolicyLayout.tsx';
+import { SEO } from '@/components/SEO.tsx';
 
 const shippingOptions = [
   { icon: Truck, method: 'Standard Delivery', time: '5-7 Business Days', cost: 'FREE above ₹999', desc: 'Available across all 28 states. ₹99 flat fee for orders below ₹999.' },
@@ -11,6 +12,11 @@ const shippingOptions = [
 export function ShippingPage() {
   return (
     <PolicyLayout title="Shipping Policy" eyebrow="Delivery" lastUpdated="February 1, 2026">
+      <SEO
+        title="Shipping Policy — Free Delivery Above ₹999"
+        description="Akash Crackers shipping policy. Free standard delivery above ₹999, express 2-3 day shipping, and same-day delivery in select cities. Pan-India coverage."
+        canonical="/shipping"
+      />
       {/* Shipping Options Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         {shippingOptions.map((opt, i) => {

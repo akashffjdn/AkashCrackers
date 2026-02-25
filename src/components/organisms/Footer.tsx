@@ -3,7 +3,7 @@ import { Container } from '@/components/atoms/Container.tsx';
 import { siteConfig } from '@/config/site.ts';
 import { footerLinks } from '@/config/navigation.ts';
 import { Instagram, Facebook, Youtube, Phone, Mail, MapPin } from 'lucide-react';
-import logoImg from '@/assets/images/logo_crackers.png';
+import logoImg from '@/assets/images/logo_crackers_optimized.png';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();

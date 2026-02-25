@@ -22,6 +22,7 @@ const ReturnsPage = lazy(() => import('@/pages/ReturnsPage.tsx').then((m) => ({ 
 const TermsPage = lazy(() => import('@/pages/TermsPage.tsx').then((m) => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage.tsx').then((m) => ({ default: m.PrivacyPage })));
 const OrderConfirmationPage = lazy(() => import('@/pages/OrderConfirmationPage.tsx').then((m) => ({ default: m.OrderConfirmationPage })));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage.tsx').then((m) => ({ default: m.NotFoundPage })));
 
 // Auth pages
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage.tsx').then((m) => ({ default: m.LoginPage })));
@@ -98,6 +99,9 @@ export default function App() {
                 <Route path="notifications" element={<NotificationsPage />} />
               </Route>
             </Route>
+
+            {/* 404 — catch all unmatched routes */}
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </Suspense>

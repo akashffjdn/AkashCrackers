@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
+import { SEO } from '@/components/SEO.tsx';
+import { organizationSchema } from '@/lib/seo.ts';
 import { cn } from '@/lib/utils.ts';
 
 const milestones = [
@@ -41,6 +43,12 @@ const fadeUp = {
 export function AboutPage() {
   return (
     <div className="pt-16 lg:pt-18">
+      <SEO
+        title="About Us — 25+ Years of Premium Fireworks from Sivakasi"
+        description="Learn about Akash Crackers — founded in 1999 in Sivakasi, Tamil Nadu. 25+ years of crafting BIS-certified, premium fireworks trusted by 50,000+ customers across India."
+        canonical="/about"
+        jsonLd={organizationSchema()}
+      />
       {/* Hero */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">

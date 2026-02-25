@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
+import { SEO } from '@/components/SEO.tsx';
 import { cn } from '@/lib/utils.ts';
 
 interface TrackingStep {
@@ -36,6 +37,11 @@ export function TrackOrderPage() {
 
   return (
     <div className="pt-16 lg:pt-18 min-h-screen">
+      <SEO
+        title="Track Your Order — Real-Time Delivery Status"
+        description="Track your Akash Crackers order in real-time. Enter your order ID to see delivery status, estimated arrival, and shipment progress."
+        canonical="/track-order"
+      />
       {/* Header */}
       <section className="pt-8 pb-10 lg:pt-10 lg:pb-14 bg-white dark:bg-surface-900">
         <Container size="narrow">

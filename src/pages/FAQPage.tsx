@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search, MessageSquare, Phone } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
+import { SEO } from '@/components/SEO.tsx';
+import { faqSchema } from '@/lib/seo.ts';
 import { siteConfig } from '@/config/site.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -94,8 +96,19 @@ export function FAQPage() {
       })).filter((cat) => cat.items.length > 0)
     : [faqData[activeCategory]];
 
+  const faqJsonLd = useMemo(
+    () => faqSchema(faqData.flatMap((cat) => cat.items.map((item) => ({ question: item.q, answer: item.a })))),
+    [],
+  );
+
   return (
     <div className="pt-16 lg:pt-18 min-h-screen">
+      <SEO
+        title="FAQ — Fireworks Ordering, Shipping, Safety & Returns"
+        description="Find answers to common questions about ordering fireworks, payment methods, shipping, safety ratings, returns, and bulk orders at Akash Crackers."
+        canonical="/faq"
+        jsonLd={faqJsonLd}
+      />
       {/* Header */}
       <section className="pt-8 pb-10 lg:pt-10 lg:pb-14 bg-white dark:bg-surface-900">
         <Container size="narrow">

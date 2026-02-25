@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
+import { SEO } from '@/components/SEO.tsx';
 import { useCartStore } from '@/store/cart.ts';
 import { products, categories } from '@/data/products.ts';
 import { formatPrice, cn } from '@/lib/utils.ts';
@@ -199,6 +200,11 @@ export function QuickOrderPage() {
 
   return (
     <div className="pt-16 lg:pt-18 min-h-screen bg-surface-50 dark:bg-surface-950">
+      <SEO
+        title="Quick Order — Fast Fireworks Ordering"
+        description="Quickly browse and add fireworks to your cart with our streamlined quick order tool. Filter by category, price, and noise level."
+        canonical="/quick-order"
+      />
       {/* Header */}
       <section className="pt-8 pb-8 lg:pt-10 lg:pb-10 bg-white dark:bg-surface-900">
         <Container size="wide">
