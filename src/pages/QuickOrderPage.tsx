@@ -1,18 +1,17 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Search, ShoppingCart, Plus, Minus, Trash2, ArrowRight,
-  Zap, Filter, ChevronDown, Volume2, VolumeX, Tag, X,
-  ArrowUpDown,
+  Zap, Filter, ChevronDown, Volume2, VolumeX, X,
+  ArrowUpDown, Award, Crown, Check,
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
-import { Badge } from '@/components/atoms/Badge.tsx';
 import { useCartStore } from '@/store/cart.ts';
 import { products, categories } from '@/data/products.ts';
 import { formatPrice, cn } from '@/lib/utils.ts';
-import type { Product, ProductBadge } from '@/types/index.ts';
+import type { Product } from '@/types/index.ts';
 
 type SortOption = 'bestselling' | 'price-asc' | 'price-desc' | 'newest' | 'rating' | 'name' | 'discount';
 type NoiseFilter = 'low' | 'medium' | 'high';
@@ -28,10 +27,10 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'name', label: 'Name: A → Z' },
 ];
 
-const noiseOptions: { value: NoiseFilter; label: string; icon: typeof Volume2 }[] = [
-  { value: 'low', label: 'Low', icon: VolumeX },
-  { value: 'medium', label: 'Medium', icon: Volume2 },
-  { value: 'high', label: 'High', icon: Volume2 },
+const noiseOptions: { value: NoiseFilter; label: string }[] = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
 ];
 
 const priceRanges: { value: PriceRange; label: string }[] = [
@@ -39,14 +38,6 @@ const priceRanges: { value: PriceRange; label: string }[] = [
   { value: '500-1500', label: '₹500 – ₹1,500' },
   { value: '1500-5000', label: '₹1,500 – ₹5,000' },
   { value: '5000-plus', label: '₹5,000+' },
-];
-
-const badgeOptions: { value: ProductBadge; label: string }[] = [
-  { value: 'bestseller', label: 'Best Seller' },
-  { value: 'premium', label: 'Premium' },
-  { value: 'new', label: 'New' },
-  { value: 'limited', label: 'Limited' },
-  { value: 'low-noise', label: 'Low Noise' },
 ];
 
 interface QuickOrderItem {
@@ -65,27 +56,46 @@ function getStockStatus(p: Product) {
   return { label: 'In Stock', color: 'text-emerald-500', dot: 'bg-emerald-500' };
 }
 
+function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
+  useEffect(() => {
+    const listener = (e: MouseEvent | TouchEvent) => {
+      if (!ref.current || ref.current.contains(e.target as Node)) return;
+      handler();
+    };
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
+    };
+  }, [ref, handler]);
+}
+
 export function QuickOrderPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('bestselling');
   const [noiseFilters, setNoiseFilters] = useState<Set<NoiseFilter>>(new Set());
   const [priceFilter, setPriceFilter] = useState<PriceRange | null>(null);
-  const [badgeFilter, setBadgeFilter] = useState<ProductBadge | null>(null);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
   const [orderItems, setOrderItems] = useState<Map<string, QuickOrderItem>>(new Map());
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
+
+  const filterRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
+  useClickOutside(filterRef, () => setShowFilters(false));
+  useClickOutside(sortRef, () => setShowSort(false));
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (noiseFilters.size > 0) count++;
     if (priceFilter) count++;
-    if (badgeFilter) count++;
     if (onSaleOnly) count++;
     return count;
-  }, [noiseFilters, priceFilter, badgeFilter, onSaleOnly]);
+  }, [noiseFilters, priceFilter, onSaleOnly]);
 
   const filteredProducts = useMemo(() => {
     let result = activeCategory === 'all'
@@ -102,12 +112,10 @@ export function QuickOrderPage() {
       );
     }
 
-    // Noise filter
     if (noiseFilters.size > 0) {
       result = result.filter((p) => noiseFilters.has(p.noiseLevel));
     }
 
-    // Price range
     if (priceFilter) {
       result = result.filter((p) => {
         switch (priceFilter) {
@@ -120,17 +128,10 @@ export function QuickOrderPage() {
       });
     }
 
-    // Badge filter
-    if (badgeFilter) {
-      result = result.filter((p) => p.badge === badgeFilter);
-    }
-
-    // On sale
     if (onSaleOnly) {
       result = result.filter((p) => p.originalPrice !== undefined);
     }
 
-    // Sorting
     result.sort((a, b) => {
       switch (sortBy) {
         case 'bestselling': return (b.reviewCount ?? 0) - (a.reviewCount ?? 0);
@@ -145,7 +146,7 @@ export function QuickOrderPage() {
     });
 
     return result;
-  }, [activeCategory, search, sortBy, noiseFilters, priceFilter, badgeFilter, onSaleOnly]);
+  }, [activeCategory, search, sortBy, noiseFilters, priceFilter, onSaleOnly]);
 
   const toggleNoise = (level: NoiseFilter) => {
     setNoiseFilters((prev) => {
@@ -159,7 +160,6 @@ export function QuickOrderPage() {
   const clearAllFilters = () => {
     setNoiseFilters(new Set());
     setPriceFilter(null);
-    setBadgeFilter(null);
     setOnSaleOnly(false);
   };
 
@@ -215,7 +215,6 @@ export function QuickOrderPage() {
                 Add quantities directly from the table — no need to visit each product page. Perfect for bulk and repeat orders.
               </p>
             </div>
-            {/* Search */}
             <div className="relative w-full lg:w-80">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400" />
               <input
@@ -231,32 +230,31 @@ export function QuickOrderPage() {
       </section>
 
       <Container size="wide">
-        <div className="py-8">
-          {/* Filter Bar */}
-          <div className="flex flex-col gap-4 mb-6">
-            {/* Row 1: Categories + Sort */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-1">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-body-sm font-medium whitespace-nowrap border transition-all duration-200',
-                      activeCategory === cat.id
-                        ? 'bg-brand-500 text-surface-950 border-brand-500'
-                        : 'bg-white dark:bg-surface-900 text-surface-600 dark:text-surface-400 border-surface-200 dark:border-surface-700 hover:border-brand-500/50',
-                    )}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Filter Toggle */}
+        <div className="py-6">
+          {/* Controls Row */}
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-1">
+              {categories.map((cat) => (
                 <button
-                  onClick={() => setShowFilters(!showFilters)}
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-body-sm font-medium whitespace-nowrap border transition-all duration-200',
+                    activeCategory === cat.id
+                      ? 'bg-brand-500 text-surface-950 border-brand-500'
+                      : 'bg-white dark:bg-surface-900 text-surface-600 dark:text-surface-400 border-surface-200 dark:border-surface-700 hover:border-brand-500/50',
+                  )}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Filter Dropdown */}
+              <div ref={filterRef} className="relative">
+                <button
+                  onClick={() => { setShowFilters(!showFilters); setShowSort(false); }}
                   className={cn(
                     'flex items-center gap-2 px-4 py-2 rounded-full text-body-sm font-medium border transition-all duration-200',
                     showFilters || activeFilterCount > 0
@@ -271,174 +269,180 @@ export function QuickOrderPage() {
                       {activeFilterCount}
                     </span>
                   )}
+                  <ChevronDown size={14} className={cn('transition-transform duration-200', showFilters && 'rotate-180')} />
                 </button>
 
-                {/* Sort Dropdown */}
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="appearance-none pl-9 pr-8 py-2 rounded-full text-body-sm font-medium bg-white dark:bg-surface-900 text-surface-600 dark:text-surface-400 border border-surface-200 dark:border-surface-700 hover:border-brand-500/50 focus:outline-none focus:border-brand-500 cursor-pointer transition-colors"
-                  >
-                    {sortOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ArrowUpDown size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none" />
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none" />
-                </div>
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 shadow-xl z-50 p-5"
+                    >
+                      {/* Noise Level */}
+                      <div className="mb-5">
+                        <p className="text-caption font-bold uppercase tracking-wider text-surface-400 mb-2.5">Noise Level</p>
+                        <div className="flex gap-2">
+                          {noiseOptions.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => toggleNoise(opt.value)}
+                              className={cn(
+                                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-body-sm font-medium border transition-all duration-200 flex-1 justify-center',
+                                noiseFilters.has(opt.value)
+                                  ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/30'
+                                  : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-brand-500/30',
+                              )}
+                            >
+                              {opt.value === 'low' ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Price Range */}
+                      <div className="mb-5">
+                        <p className="text-caption font-bold uppercase tracking-wider text-surface-400 mb-2.5">Price Range</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {priceRanges.map((range) => (
+                            <button
+                              key={range.value}
+                              onClick={() => setPriceFilter(priceFilter === range.value ? null : range.value)}
+                              className={cn(
+                                'px-3 py-2 rounded-lg text-body-sm font-medium border transition-all duration-200 text-center',
+                                priceFilter === range.value
+                                  ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/30'
+                                  : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-brand-500/30',
+                              )}
+                            >
+                              {range.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* On Sale Toggle */}
+                      <div className="mb-5">
+                        <button
+                          onClick={() => setOnSaleOnly(!onSaleOnly)}
+                          className={cn(
+                            'w-full px-3 py-2.5 rounded-lg text-body-sm font-medium border transition-all duration-200 text-center',
+                            onSaleOnly
+                              ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
+                              : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-red-500/30',
+                          )}
+                        >
+                          On Sale Only
+                        </button>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-4 border-t border-surface-200 dark:border-surface-800">
+                        <button
+                          onClick={clearAllFilters}
+                          className="text-body-sm font-medium text-surface-400 hover:text-red-500 transition-colors"
+                        >
+                          Clear all
+                        </button>
+                        <button
+                          onClick={() => setShowFilters(false)}
+                          className="px-4 py-2 rounded-lg bg-brand-500 text-surface-950 text-body-sm font-bold hover:bg-brand-600 transition-colors"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div ref={sortRef} className="relative">
+                <button
+                  onClick={() => { setShowSort(!showSort); setShowFilters(false); }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-body-sm font-medium bg-white dark:bg-surface-900 text-surface-600 dark:text-surface-400 border border-surface-200 dark:border-surface-700 hover:border-brand-500/50 transition-colors"
+                >
+                  <ArrowUpDown size={14} />
+                  <span className="hidden sm:inline">{sortOptions.find((s) => s.value === sortBy)?.label}</span>
+                  <span className="sm:hidden">Sort</span>
+                  <ChevronDown size={14} className={cn('transition-transform duration-200', showSort && 'rotate-180')} />
+                </button>
+
+                <AnimatePresence>
+                  {showSort && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-800 shadow-xl z-50 py-2"
+                    >
+                      {sortOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setSortBy(opt.value); setShowSort(false); }}
+                          className={cn(
+                            'w-full flex items-center justify-between px-4 py-2.5 text-body-sm font-medium transition-colors text-left',
+                            sortBy === opt.value
+                              ? 'text-brand-600 dark:text-brand-400 bg-brand-500/5'
+                              : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-850',
+                          )}
+                        >
+                          {opt.label}
+                          {sortBy === opt.value && <Check size={14} />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-
-            {/* Row 2: Expanded Filters */}
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
-              >
-                {/* Noise Level */}
-                <div className="flex items-center gap-2">
-                  <span className="text-caption font-bold uppercase tracking-wider text-surface-400">Noise:</span>
-                  {noiseOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => toggleNoise(opt.value)}
-                      className={cn(
-                        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-sm font-medium border transition-all duration-200',
-                        noiseFilters.has(opt.value)
-                          ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/30'
-                          : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-brand-500/30',
-                      )}
-                    >
-                      {opt.value === 'low' ? <VolumeX size={12} /> : <Volume2 size={12} />}
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
-
-                {/* Price Range */}
-                <div className="flex items-center gap-2">
-                  <span className="text-caption font-bold uppercase tracking-wider text-surface-400">Price:</span>
-                  {priceRanges.map((range) => (
-                    <button
-                      key={range.value}
-                      onClick={() => setPriceFilter(priceFilter === range.value ? null : range.value)}
-                      className={cn(
-                        'px-3 py-1.5 rounded-lg text-body-sm font-medium border transition-all duration-200',
-                        priceFilter === range.value
-                          ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/30'
-                          : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-brand-500/30',
-                      )}
-                    >
-                      {range.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
-
-                {/* Badge Filter */}
-                <div className="flex items-center gap-2">
-                  <span className="text-caption font-bold uppercase tracking-wider text-surface-400">Tag:</span>
-                  {badgeOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setBadgeFilter(badgeFilter === opt.value ? null : opt.value)}
-                      className={cn(
-                        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-sm font-medium border transition-all duration-200',
-                        badgeFilter === opt.value
-                          ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/30'
-                          : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-brand-500/30',
-                      )}
-                    >
-                      <Tag size={12} />
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
-
-                {/* On Sale Toggle */}
-                <button
-                  onClick={() => setOnSaleOnly(!onSaleOnly)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-body-sm font-medium border transition-all duration-200',
-                    onSaleOnly
-                      ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
-                      : 'text-surface-500 border-surface-200 dark:border-surface-700 hover:border-red-500/30',
-                  )}
-                >
-                  On Sale
-                </button>
-
-                {activeFilterCount > 0 && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-body-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
-                  >
-                    <X size={12} />
-                    Clear
-                  </button>
-                )}
-              </motion.div>
-            )}
-
-            {/* Active Filter Tags */}
-            {activeFilterCount > 0 && !showFilters && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-caption text-surface-400">Active:</span>
-                {noiseFilters.size > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-500/10 text-body-sm text-brand-600 dark:text-brand-400">
-                    Noise: {[...noiseFilters].join(', ')}
-                    <button onClick={() => setNoiseFilters(new Set())} className="hover:text-red-500"><X size={12} /></button>
-                  </span>
-                )}
-                {priceFilter && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-500/10 text-body-sm text-brand-600 dark:text-brand-400">
-                    {priceRanges.find((r) => r.value === priceFilter)?.label}
-                    <button onClick={() => setPriceFilter(null)} className="hover:text-red-500"><X size={12} /></button>
-                  </span>
-                )}
-                {badgeFilter && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-500/10 text-body-sm text-brand-600 dark:text-brand-400">
-                    {badgeOptions.find((b) => b.value === badgeFilter)?.label}
-                    <button onClick={() => setBadgeFilter(null)} className="hover:text-red-500"><X size={12} /></button>
-                  </span>
-                )}
-                {onSaleOnly && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-body-sm text-red-600 dark:text-red-400">
-                    On Sale
-                    <button onClick={() => setOnSaleOnly(false)} className="hover:text-red-500"><X size={12} /></button>
-                  </span>
-                )}
-                <button onClick={clearAllFilters} className="text-caption text-surface-400 hover:text-red-500 transition-colors">
-                  Clear all
-                </button>
-              </div>
-            )}
           </div>
+
+          {/* Active Filter Tags */}
+          {activeFilterCount > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mb-4">
+              {noiseFilters.size > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-500/10 text-body-sm text-brand-600 dark:text-brand-400">
+                  Noise: {[...noiseFilters].join(', ')}
+                  <button onClick={() => setNoiseFilters(new Set())} className="hover:text-red-500 ml-0.5"><X size={12} /></button>
+                </span>
+              )}
+              {priceFilter && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-500/10 text-body-sm text-brand-600 dark:text-brand-400">
+                  {priceRanges.find((r) => r.value === priceFilter)?.label}
+                  <button onClick={() => setPriceFilter(null)} className="hover:text-red-500 ml-0.5"><X size={12} /></button>
+                </span>
+              )}
+              {onSaleOnly && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-body-sm text-red-600 dark:text-red-400">
+                  On Sale
+                  <button onClick={() => setOnSaleOnly(false)} className="hover:text-red-500 ml-0.5"><X size={12} /></button>
+                </span>
+              )}
+              <button onClick={clearAllFilters} className="text-caption text-surface-400 hover:text-red-500 transition-colors">
+                Clear all
+              </button>
+            </div>
+          )}
 
           {/* Results count */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-body-sm text-surface-400">
-              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+          <p className="text-body-sm text-surface-400 mb-3">
+            {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+          </p>
 
           {/* Product Table */}
           <div className="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden">
             {/* Table Header */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-surface-50 dark:bg-surface-850 border-b border-surface-200 dark:border-surface-800 text-label font-bold uppercase tracking-wider text-surface-500">
-              <div className="col-span-5">Product</div>
-              <div className="col-span-1">Stock</div>
+              <div className="col-span-4">Product</div>
+              <div className="col-span-2 text-center">Label</div>
+              <div className="col-span-1 text-center">Stock</div>
               <div className="col-span-2 text-right">Price</div>
-              <div className="col-span-4 text-center">Quantity</div>
+              <div className="col-span-3 text-center">Quantity</div>
             </div>
 
             {/* Rows */}
@@ -447,101 +451,188 @@ export function QuickOrderPage() {
                 const qty = getQuantity(product.id);
                 const stock = getStockStatus(product);
                 const discount = getDiscount(product);
+                const isBestseller = product.badge === 'bestseller';
+                const isPremium = product.badge === 'premium';
                 return (
                   <motion.div
                     key={product.id}
                     layout
                     className={cn(
-                      'grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 items-center transition-colors',
+                      'transition-colors',
                       qty > 0 && 'bg-brand-500/5 dark:bg-brand-500/10',
                       !product.inStock && 'opacity-50',
                     )}
                   >
-                    {/* Product Info — badge on image */}
-                    <div className="md:col-span-5 flex items-center gap-4">
-                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-surface-850 flex-shrink-0">
-                        <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
-                        {product.badge && (
-                          <div className="absolute top-0 left-0">
-                            <Badge type={product.badge} className="text-[8px] px-1 py-0.5 rounded-none rounded-br-md" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <Link
-                          to={`/product/${product.slug}`}
-                          className="font-display font-semibold text-body-md text-surface-900 dark:text-surface-100 hover:text-brand-500 dark:hover:text-brand-400 transition-colors truncate block"
-                        >
-                          {product.name}
+                    {/* Desktop Row */}
+                    <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-4 items-center">
+                      <div className="col-span-4 flex items-center gap-4">
+                        <Link to={`/product/${product.slug}`} className="relative w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-surface-850 flex-shrink-0 hover:opacity-80 transition-opacity">
+                          <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
                         </Link>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="min-w-0">
+                          <Link
+                            to={`/product/${product.slug}`}
+                            className="font-display font-semibold text-body-md text-surface-900 dark:text-surface-100 hover:text-brand-500 dark:hover:text-brand-400 transition-colors truncate block"
+                          >
+                            {product.name}
+                          </Link>
                           <p className="text-caption text-surface-500 truncate">{product.shortDescription}</p>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Stock */}
-                    <div className="md:col-span-1 hidden md:flex items-center gap-1.5">
-                      <div className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', stock.dot)} />
-                      <span className={cn('text-caption font-medium', stock.color)}>{stock.label}</span>
-                    </div>
+                      <div className="col-span-2 flex items-center justify-center">
+                        {isBestseller ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                            <Award size={13} className="text-amber-500" />
+                            <span className="text-caption font-bold text-amber-600 dark:text-amber-400">Best Seller</span>
+                          </span>
+                        ) : isPremium ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20">
+                            <Crown size={13} className="text-violet-500" />
+                            <span className="text-caption font-bold text-violet-600 dark:text-violet-400">Premium</span>
+                          </span>
+                        ) : (
+                          <span className="text-surface-300 dark:text-surface-700">—</span>
+                        )}
+                      </div>
 
-                    {/* Price */}
-                    <div className="md:col-span-2 flex items-center gap-2 md:justify-end">
-                      <span className="font-display font-bold text-body-lg text-brand-600 dark:text-brand-400">
-                        {formatPrice(product.price)}
-                      </span>
-                      {product.originalPrice && (
-                        <span className="text-caption text-surface-400 line-through">
-                          {formatPrice(product.originalPrice)}
+                      <div className="col-span-1 flex items-center gap-1.5">
+                        <div className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', stock.dot)} />
+                        <span className={cn('text-caption font-medium', stock.color)}>{stock.label}</span>
+                      </div>
+
+                      <div className="col-span-2 flex items-center gap-2 justify-end">
+                        <span className="font-display font-bold text-body-lg text-brand-600 dark:text-brand-400">
+                          {formatPrice(product.price)}
                         </span>
-                      )}
-                      {discount > 0 && (
-                        <span className="text-[10px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">
-                          -{discount}%
-                        </span>
-                      )}
+                        {product.originalPrice && (
+                          <span className="text-caption text-surface-400 line-through">
+                            {formatPrice(product.originalPrice)}
+                          </span>
+                        )}
+                        {discount > 0 && (
+                          <span className="text-[10px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">
+                            -{discount}%
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="col-span-3 flex items-center justify-center gap-2">
+                        {!product.inStock ? (
+                          <span className="text-body-sm text-surface-400 font-medium">Unavailable</span>
+                        ) : qty === 0 ? (
+                          <button
+                            onClick={() => updateQuantity(product, 1)}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-brand-500 hover:text-surface-950 text-body-sm font-medium transition-all duration-200"
+                          >
+                            <Plus size={16} />
+                            Add
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(product, qty - 1)}
+                              className="w-9 h-9 rounded-lg flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                            >
+                              {qty === 1 ? <Trash2 size={15} /> : <Minus size={15} />}
+                            </button>
+                            <input
+                              type="number"
+                              value={qty}
+                              onChange={(e) => updateQuantity(product, Math.max(0, parseInt(e.target.value) || 0))}
+                              className="w-14 h-9 rounded-lg text-center bg-surface-50 dark:bg-surface-850 border border-surface-200 dark:border-surface-700 text-body-sm font-bold text-surface-900 dark:text-surface-100 focus:outline-none focus:border-brand-500"
+                              min={0}
+                              max={99}
+                            />
+                            <button
+                              onClick={() => updateQuantity(product, qty + 1)}
+                              className="w-9 h-9 rounded-lg flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
+                            >
+                              <Plus size={15} />
+                            </button>
+                            <span className="ml-2 text-body-sm font-semibold text-brand-600 dark:text-brand-400 min-w-[70px] text-right">
+                              {formatPrice(product.price * qty)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Quantity Control */}
-                    <div className="md:col-span-4 flex items-center justify-between md:justify-center gap-2">
-                      {!product.inStock ? (
-                        <span className="text-body-sm text-surface-400 font-medium">Unavailable</span>
-                      ) : qty === 0 ? (
-                        <button
-                          onClick={() => updateQuantity(product, 1)}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-brand-500 hover:text-surface-950 text-body-sm font-medium transition-all duration-200 w-full md:w-auto justify-center"
-                        >
-                          <Plus size={16} />
-                          Add
-                        </button>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => updateQuantity(product, qty - 1)}
-                            className="w-9 h-9 rounded-lg flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                    {/* Mobile Card */}
+                    <div className="md:hidden flex gap-3 px-4 py-3">
+                      <Link to={`/product/${product.slug}`} className="relative w-16 h-16 rounded-xl overflow-hidden bg-surface-100 dark:bg-surface-850 flex-shrink-0 hover:opacity-80 transition-opacity">
+                        <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <Link
+                            to={`/product/${product.slug}`}
+                            className="font-display font-semibold text-body-sm text-surface-900 dark:text-surface-100 hover:text-brand-500 transition-colors line-clamp-1"
                           >
-                            {qty === 1 ? <Trash2 size={15} /> : <Minus size={15} />}
-                          </button>
-                          <input
-                            type="number"
-                            value={qty}
-                            onChange={(e) => updateQuantity(product, Math.max(0, parseInt(e.target.value) || 0))}
-                            className="w-14 h-9 rounded-lg text-center bg-surface-50 dark:bg-surface-850 border border-surface-200 dark:border-surface-700 text-body-sm font-bold text-surface-900 dark:text-surface-100 focus:outline-none focus:border-brand-500"
-                            min={0}
-                            max={99}
-                          />
-                          <button
-                            onClick={() => updateQuantity(product, qty + 1)}
-                            className="w-9 h-9 rounded-lg flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
-                          >
-                            <Plus size={15} />
-                          </button>
-                          <span className="ml-2 text-body-sm font-semibold text-brand-600 dark:text-brand-400 min-w-[70px] text-right">
-                            {formatPrice(product.price * qty)}
+                            {product.name}
+                          </Link>
+                          <span className={cn('flex items-center gap-1 text-caption font-medium whitespace-nowrap', stock.color)}>
+                            <span className={cn('w-1.5 h-1.5 rounded-full', stock.dot)} />
+                            {stock.label}
                           </span>
                         </div>
-                      )}
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {isBestseller && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 text-[10px] font-bold text-amber-500">
+                              <Award size={10} /> Best Seller
+                            </span>
+                          )}
+                          {isPremium && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-500/10 text-[10px] font-bold text-violet-500">
+                              <Crown size={10} /> Premium
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-display font-bold text-body-md text-brand-600 dark:text-brand-400">
+                              {formatPrice(product.price)}
+                            </span>
+                            {product.originalPrice && (
+                              <span className="text-caption text-surface-400 line-through">
+                                {formatPrice(product.originalPrice)}
+                              </span>
+                            )}
+                            {discount > 0 && (
+                              <span className="text-[10px] font-bold text-red-500 bg-red-500/10 px-1 py-0.5 rounded">
+                                -{discount}%
+                              </span>
+                            )}
+                          </div>
+                          {!product.inStock ? (
+                            <span className="text-caption text-surface-400">Unavailable</span>
+                          ) : qty === 0 ? (
+                            <button
+                              onClick={() => updateQuantity(product, 1)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-brand-500 hover:text-surface-950 text-caption font-medium transition-all"
+                            >
+                              <Plus size={14} />
+                              Add
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => updateQuantity(product, qty - 1)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                              >
+                                {qty === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
+                              </button>
+                              <span className="w-8 text-center text-body-sm font-bold text-surface-900 dark:text-surface-100">{qty}</span>
+                              <button
+                                onClick={() => updateQuantity(product, qty + 1)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
+                              >
+                                <Plus size={13} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 );

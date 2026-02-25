@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye } from 'lucide-react';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { Badge } from '@/components/atoms/Badge.tsx';
 import { StarRating } from '@/components/atoms/StarRating.tsx';
 import { cn, formatPrice, calculateDiscount } from '@/lib/utils.ts';
 import { useCartStore } from '@/store/cart.ts';
+import { useAuthStore } from '@/store/auth.ts';
+import { useWishlistStore } from '@/store/wishlist.ts';
 import type { Product } from '@/types/index.ts';
 
 interface ProductCardProps {
@@ -15,12 +17,26 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
+  const user = useAuthStore((s) => s.user);
+  const toggleWishlist = useWishlistStore((s) => s.toggle);
+  const isWishlisted = useWishlistStore((s) => s.items.has(product.id));
+  const navigate = useNavigate();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addItem(product);
     openCart();
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    toggleWishlist(user.uid, product.id);
   };
 
   const discount = product.originalPrice
@@ -89,11 +105,18 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               >
                 <ShoppingCart size={20} />
               </button>
-              <span
-                className="flex items-center justify-center w-12 h-12 rounded-full bg-white/90 dark:bg-surface-800/90 text-surface-700 dark:text-surface-200 transition-all duration-200 translate-y-4 group-hover:translate-y-0 delay-75 shadow-lg"
+              <button
+                onClick={handleToggleWishlist}
+                className={cn(
+                  'flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 translate-y-4 group-hover:translate-y-0 delay-75 shadow-lg',
+                  isWishlisted
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/90 dark:bg-surface-800/90 text-surface-700 dark:text-surface-200 hover:text-red-500',
+                )}
+                aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                <Eye size={20} />
-              </span>
+                <Heart size={20} className={isWishlisted ? 'fill-current' : ''} />
+              </button>
             </div>
           </div>
 

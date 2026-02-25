@@ -70,6 +70,7 @@ export interface NavLink {
   label: string;
   href: string;
   children?: NavLink[];
+  highlight?: boolean;
 }
 
 export interface HeroSlide {

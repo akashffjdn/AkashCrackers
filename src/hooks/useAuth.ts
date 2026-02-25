@@ -2,12 +2,15 @@ import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase.ts';
 import { useAuthStore } from '@/store/auth.ts';
+import { useWishlistStore } from '@/store/wishlist.ts';
 import { mapFirebaseUser } from '@/services/auth.ts';
 import { createUserProfile, getUserProfile } from '@/services/firestore.ts';
 
 export function useAuthListener() {
   const setUser = useAuthStore((s) => s.setUser);
   const setLoading = useAuthStore((s) => s.setLoading);
+  const fetchWishlist = useWishlistStore((s) => s.fetchWishlist);
+  const clearWishlist = useWishlistStore((s) => s.clear);
 
   useEffect(() => {
     setLoading(true);
@@ -20,10 +23,12 @@ export function useAuthListener() {
           await createUserProfile(profile).catch(() => {});
         }
         setUser(existing ?? profile);
+        fetchWishlist(profile.uid);
       } else {
         setUser(null);
+        clearWishlist();
       }
     });
     return unsubscribe;
-  }, [setUser, setLoading]);
+  }, [setUser, setLoading, fetchWishlist, clearWishlist]);
 }

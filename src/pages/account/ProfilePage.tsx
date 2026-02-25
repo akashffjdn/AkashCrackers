@@ -57,7 +57,7 @@ export function ProfilePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
+        <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
           <Input
             label="Full Name"
             name="displayName"

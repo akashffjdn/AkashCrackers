@@ -63,6 +63,9 @@ export default {
         caption: ['0.75rem', { lineHeight: '1.4' }],
         label: ['0.6875rem', { lineHeight: '1.4', letterSpacing: '0.08em' }],
       },
+      gridTemplateColumns: {
+        '16': 'repeat(16, minmax(0, 1fr))',
+      },
       maxWidth: {
         container: '1440px',
         content: '1200px',

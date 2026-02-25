@@ -63,7 +63,7 @@ export function SecurityPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
           <Input
             label="Current Password"
             name="currentPassword"

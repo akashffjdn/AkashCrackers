@@ -1,9 +1,9 @@
-import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw,
-  ChevronRight, Star, Volume2, VolumeX, AlertTriangle,
+  ChevronRight, ChevronLeft, Star, Volume2, VolumeX, AlertTriangle,
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
@@ -12,6 +12,8 @@ import { StarRating } from '@/components/atoms/StarRating.tsx';
 import { QuantitySelector } from '@/components/atoms/QuantitySelector.tsx';
 import { ProductCard } from '@/components/molecules/ProductCard.tsx';
 import { useCartStore } from '@/store/cart.ts';
+import { useAuthStore } from '@/store/auth.ts';
+import { useWishlistStore } from '@/store/wishlist.ts';
 import { products } from '@/data/products.ts';
 import { formatPrice, calculateDiscount, cn } from '@/lib/utils.ts';
 
@@ -33,6 +35,25 @@ export function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
+  const user = useAuthStore((s) => s.user);
+  const toggleWishlist = useWishlistStore((s) => s.toggle);
+  const wishlistItems = useWishlistStore((s) => s.items);
+  const navigate = useNavigate();
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const product = products.find((p) => p.slug === slug);
 
@@ -59,6 +80,33 @@ export function ProductPage() {
     openCart();
   };
 
+  const isWishlisted = wishlistItems.has(product.id);
+  const handleToggleWishlist = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    toggleWishlist(user.uid, product.id);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (Math.abs(distance) < 50) return;
+    if (distance > 0 && selectedImage < product.images.length - 1) {
+      setSelectedImage(selectedImage + 1);
+    } else if (distance < 0 && selectedImage > 0) {
+      setSelectedImage(selectedImage - 1);
+    }
+  };
+
   const discount = product.originalPrice
     ? calculateDiscount(product.price, product.originalPrice)
     : null;
@@ -74,8 +122,16 @@ export function ProductPage() {
   return (
     <div className="pt-16 lg:pt-18">
       <Container size="wide">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 pt-6 pb-2 text-body-sm text-surface-400">
+        {/* Breadcrumbs — mobile: compact back link */}
+        <Link
+          to={`/shop?category=${product.category}`}
+          className="lg:hidden flex items-center gap-1 pt-4 pb-2 -ml-1 text-body-sm text-surface-500 dark:text-surface-400 active:text-brand-500 transition-colors"
+        >
+          <ChevronLeft size={18} />
+          <span className="capitalize">{product.category.replace('-', ' ')}</span>
+        </Link>
+        {/* Breadcrumbs — desktop: full trail */}
+        <nav className="hidden lg:flex items-center gap-2 pt-6 pb-2 text-body-sm text-surface-400">
           <Link to="/" className="hover:text-brand-500 transition-colors">Home</Link>
           <ChevronRight size={12} />
           <Link to="/shop" className="hover:text-brand-500 transition-colors">Shop</Link>
@@ -95,7 +151,12 @@ export function ProductPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-surface-100 dark:bg-surface-850">
+              <div
+                className="relative aspect-[4/3] overflow-hidden bg-surface-100 dark:bg-surface-850 -mx-4 sm:-mx-6 lg:mx-0 lg:rounded-2xl"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 <img
                   src={product.images[selectedImage]}
                   alt={product.name}
@@ -106,9 +167,28 @@ export function ProductPage() {
                     <Badge type={product.badge} />
                   </div>
                 )}
+                {/* Dot indicators — mobile */}
+                {product.images.length > 1 && (
+                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 lg:hidden">
+                    {product.images.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedImage(i)}
+                        className={cn(
+                          'h-2 rounded-full transition-all duration-300',
+                          selectedImage === i
+                            ? 'w-6 bg-white'
+                            : 'w-2 bg-white/50',
+                        )}
+                        aria-label={`View image ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
+              {/* Thumbnails — desktop only */}
               {product.images.length > 1 && (
-                <div className="mt-4 flex gap-3">
+                <div className="mt-4 hidden lg:flex gap-3">
                   {product.images.map((img, i) => (
                     <button
                       key={i}
@@ -195,7 +275,7 @@ export function ProductPage() {
               </div>
 
               {/* Actions */}
-              <div className="mt-8 space-y-4">
+              <div ref={ctaRef} className="mt-8 space-y-4">
                 <div className="flex items-center gap-4">
                   <QuantitySelector quantity={quantity} onChange={setQuantity} />
                   <span className="text-body-sm text-surface-500">
@@ -218,10 +298,19 @@ export function ProductPage() {
                     className="flex-1"
                   >
                     <ShoppingCart size={20} />
-                    Add to Cart — {formatPrice(product.price * quantity)}
+                    Add to Cart
                   </Button>
-                  <button className="flex items-center justify-center w-12 h-12 rounded-xl border border-surface-200 dark:border-surface-700 text-surface-500 hover:text-red-500 hover:border-red-500/30 transition-colors">
-                    <Heart size={20} />
+                  <button
+                    onClick={handleToggleWishlist}
+                    className={cn(
+                      'flex items-center justify-center w-12 h-12 rounded-xl border transition-colors',
+                      isWishlisted
+                        ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                        : 'border-surface-200 dark:border-surface-700 text-surface-500 hover:text-red-500 hover:border-red-500/30',
+                    )}
+                    aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                  >
+                    <Heart size={20} className={isWishlisted ? 'fill-current' : ''} />
                   </button>
                   <button className="flex items-center justify-center w-12 h-12 rounded-xl border border-surface-200 dark:border-surface-700 text-surface-500 hover:text-brand-500 hover:border-brand-500/30 transition-colors">
                     <Share2 size={20} />
@@ -267,7 +356,16 @@ export function ProductPage() {
             <h2 className="font-display font-bold text-heading-lg text-surface-900 dark:text-surface-50 mb-8">
               You May Also Like
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Mobile: horizontal scroll */}
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4 sm:-mx-6 sm:px-6 lg:hidden no-scrollbar">
+              {relatedProducts.map((p, i) => (
+                <div key={p.id} className="min-w-[260px] max-w-[280px] flex-shrink-0 snap-start">
+                  <ProductCard product={p} index={i} />
+                </div>
+              ))}
+            </div>
+            {/* Desktop: grid */}
+            <div className="hidden lg:grid grid-cols-4 gap-6">
               {relatedProducts.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
@@ -275,6 +373,44 @@ export function ProductPage() {
           </Container>
         </section>
       )}
+
+      {/* Sticky Add-to-Cart — mobile only */}
+      <AnimatePresence>
+        {showStickyBar && product.inStock && (
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
+          >
+            <div
+              className="bg-white/95 dark:bg-surface-900/95 backdrop-blur-lg border-t border-surface-200 dark:border-surface-800 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={product.images[0]}
+                  alt=""
+                  className="w-11 h-11 rounded-lg object-cover flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-body-sm font-semibold text-surface-900 dark:text-surface-100 truncate">
+                    {product.name}
+                  </p>
+                  <p className="text-body-sm font-bold text-brand-600 dark:text-brand-400">
+                    {formatPrice(product.price)}
+                  </p>
+                </div>
+                <Button onClick={handleAddToCart} size="md" className="flex-shrink-0">
+                  <ShoppingCart size={18} />
+                  Add to Cart
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
