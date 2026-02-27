@@ -9,10 +9,12 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase.ts';
 import type {
   UserProfile,
+  UserRole,
   Address,
   Order,
   WishlistItem,
@@ -31,9 +33,15 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 export async function createUserProfile(profile: UserProfile) {
   await setDoc(doc(db, 'users', profile.uid), {
     ...profile,
+    role: 'user',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function getUserRole(uid: string): Promise<UserRole> {
+  const snap = await getDoc(doc(db, 'users', uid));
+  return snap.exists() ? (snap.data().role ?? 'user') : 'user';
 }
 
 export async function updateUserProfile(
@@ -95,14 +103,39 @@ export async function getOrderById(
 export async function createOrder(
   uid: string,
   orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+  customerName?: string,
+  customerEmail?: string,
 ): Promise<string> {
-  const ref = doc(collection(db, 'users', uid, 'orders'));
-  await setDoc(ref, {
+  const userOrderRef = doc(collection(db, 'users', uid, 'orders'));
+  const topOrderRef = doc(db, 'orders', userOrderRef.id);
+  const batch = writeBatch(db);
+
+  const baseData = {
     ...orderData,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  };
+
+  // Write to user subcollection
+  batch.set(userOrderRef, baseData);
+
+  // Write to top-level orders collection for admin queries
+  batch.set(topOrderRef, {
+    ...baseData,
+    customerName: customerName ?? '',
+    customerEmail: customerEmail ?? '',
+    notes: '',
+    statusHistory: [
+      {
+        status: orderData.status,
+        changedAt: new Date().toISOString(),
+        changedBy: 'system',
+      },
+    ],
   });
-  return ref.id;
+
+  await batch.commit();
+  return userOrderRef.id;
 }
 
 // =====================

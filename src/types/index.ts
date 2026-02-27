@@ -97,12 +97,18 @@ export interface Testimonial {
 // AUTH & USER TYPES
 // =====================
 
+export type UserRole = 'user' | 'admin';
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   photoURL: string | null;
   phone: string;
+  role?: UserRole;
+  isActive?: boolean;
+  city?: string;
+  state?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,7 +126,9 @@ export interface Address {
   isDefault: boolean;
 }
 
-export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
 
 export interface OrderItem {
   productId: string;
@@ -139,6 +147,7 @@ export interface Order {
   shipping: number;
   total: number;
   status: OrderStatus;
+  paymentStatus?: PaymentStatus;
   shippingAddress: Address;
   paymentMethod: string;
   paymentId?: string;

@@ -18,6 +18,7 @@ const timelineSteps: { status: OrderStatus; label: string; icon: typeof Package 
 const statusIndex: Record<OrderStatus, number> = {
   pending: 0,
   confirmed: 1,
+  processing: 1,
   shipped: 2,
   delivered: 3,
   cancelled: -1,

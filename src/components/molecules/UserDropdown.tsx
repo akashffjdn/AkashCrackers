@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Package, Heart, MapPin, Settings, LogOut } from 'lucide-react';
+import { User, Package, Heart, MapPin, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { Avatar } from '@/components/atoms/Avatar.tsx';
 import { useAuthStore } from '@/store/auth.ts';
 // signOutUser is dynamically imported to keep Firebase out of the initial bundle
@@ -21,6 +21,7 @@ const menuItems = [
 
 export function UserDropdown({ isOpen, onClose }: UserDropdownProps) {
   const user = useAuthStore((s) => s.user);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const logout = useAuthStore((s) => s.logout);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -64,6 +65,20 @@ export function UserDropdown({ isOpen, onClose }: UserDropdownProps) {
           </div>
         </div>
       </div>
+
+      {/* Admin Link */}
+      {isAdmin && (
+        <div className="px-2 pt-2">
+          <Link
+            to="/admin"
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium text-brand-600 dark:text-brand-400 bg-brand-500/5 hover:bg-brand-500/10 transition-colors"
+          >
+            <LayoutDashboard size={18} />
+            Admin Panel
+          </Link>
+        </div>
+      )}
 
       {/* Menu Items */}
       <div className="p-2">

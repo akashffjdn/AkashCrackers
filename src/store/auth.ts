@@ -6,6 +6,7 @@ interface AuthState {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   setUser: (user: UserProfile | null) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
@@ -17,11 +18,13 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isLoading: true,
       isAuthenticated: false,
+      isAdmin: false,
 
       setUser: (user) =>
         set({
           user,
           isAuthenticated: !!user,
+          isAdmin: user?.role === 'admin',
           isLoading: false,
         }),
 
@@ -31,12 +34,19 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           isAuthenticated: false,
+          isAdmin: false,
           isLoading: false,
         }),
     }),
     {
       name: 'akash-crackers-auth',
       partialize: (state) => ({ user: state.user }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.user) {
+          state.isAuthenticated = true;
+          state.isAdmin = state.user.role === 'admin';
+        }
+      },
     },
   ),
 );

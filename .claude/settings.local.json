@@ -8,7 +8,10 @@
       "WebFetch(domain:www.uline.com)",
       "Bash(npm run build)",
       "Bash(npx --yes sharp-cli:*)",
-      "Bash(npx sharp-cli:*)"
+      "Bash(npx sharp-cli:*)",
+      "Bash(find:*)",
+      "Bash(npx vite build:*)",
+      "Bash(git status:*)"
     ]
   }
 }

@@ -3,11 +3,12 @@ import { cn } from '@/lib/utils.ts';
 interface AvatarProps {
   src?: string | null;
   name: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 const sizes = {
+  xs: 'w-7 h-7 text-[10px]',
   sm: 'w-8 h-8 text-xs',
   md: 'w-10 h-10 text-sm',
   lg: 'w-16 h-16 text-lg',

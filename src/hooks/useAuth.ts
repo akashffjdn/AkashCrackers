@@ -32,6 +32,17 @@ export function useAuthListener() {
           }
           setUser(existing ?? profile);
           fetchWishlist(profile.uid);
+
+          // Dev utility: type __makeAdmin() in browser console to grant admin role
+          if (import.meta.env.DEV) {
+            (window as unknown as Record<string, unknown>).__makeAdmin = async () => {
+              const { updateUserRole } = await import('@/services/admin.ts');
+              await updateUserRole(firebaseUser.uid, 'admin');
+              const updated = await getUserProfile(firebaseUser.uid);
+              if (updated) setUser(updated);
+              console.log('Admin role granted! Refresh the page or navigate to /admin');
+            };
+          }
         } else {
           setUser(null);
           clearWishlist();

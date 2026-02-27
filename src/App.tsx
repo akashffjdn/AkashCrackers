@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { MainLayout } from '@/layouts/MainLayout.tsx';
 import { AuthLayout } from '@/layouts/AuthLayout.tsx';
@@ -40,6 +40,27 @@ const AddressBookPage = lazy(() => import('@/pages/account/AddressBookPage.tsx')
 const SecurityPage = lazy(() => import('@/pages/account/SecurityPage.tsx').then((m) => ({ default: m.SecurityPage })));
 const WishlistPage = lazy(() => import('@/pages/account/WishlistPage.tsx').then((m) => ({ default: m.WishlistPage })));
 const NotificationsPage = lazy(() => import('@/pages/account/NotificationsPage.tsx').then((m) => ({ default: m.NotificationsPage })));
+
+// Admin pages (lazy-loaded — zero impact on customer bundle)
+const AdminRoute = lazy(() => import('@/components/atoms/AdminRoute.tsx').then((m) => ({ default: m.AdminRoute })));
+const AdminLayout = lazy(() => import('@/layouts/AdminLayout.tsx').then((m) => ({ default: m.AdminLayout })));
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage.tsx').then((m) => ({ default: m.AdminDashboardPage })));
+const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage.tsx').then((m) => ({ default: m.AdminOrdersPage })));
+const AdminOrderDetailPage = lazy(() => import('@/pages/admin/AdminOrderDetailPage.tsx').then((m) => ({ default: m.AdminOrderDetailPage })));
+const AdminProductsPage = lazy(() => import('@/pages/admin/AdminProductsPage.tsx').then((m) => ({ default: m.AdminProductsPage })));
+const AdminProductFormPage = lazy(() => import('@/pages/admin/AdminProductFormPage.tsx').then((m) => ({ default: m.AdminProductFormPage })));
+const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage.tsx').then((m) => ({ default: m.AdminUsersPage })));
+const AdminUserDetailPage = lazy(() => import('@/pages/admin/AdminUserDetailPage.tsx').then((m) => ({ default: m.AdminUserDetailPage })));
+const AdminUserEditPage = lazy(() => import('@/pages/admin/AdminUserEditPage.tsx').then((m) => ({ default: m.AdminUserEditPage })));
+const AdminCategoriesPage = lazy(() => import('@/pages/admin/AdminCategoriesPage.tsx').then((m) => ({ default: m.AdminCategoriesPage })));
+const AdminCategoryFormPage = lazy(() => import('@/pages/admin/AdminCategoryFormPage.tsx').then((m) => ({ default: m.AdminCategoryFormPage })));
+const AdminAnalyticsPage = lazy(() => import('@/pages/admin/AdminAnalyticsPage.tsx').then((m) => ({ default: m.AdminAnalyticsPage })));
+const AdminProductsAnalyticsPage = lazy(() => import('@/pages/admin/AdminProductsAnalyticsPage.tsx').then((m) => ({ default: m.AdminProductsAnalyticsPage })));
+const AdminContentPage = lazy(() => import('@/pages/admin/AdminContentPage.tsx').then((m) => ({ default: m.AdminContentPage })));
+const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage.tsx').then((m) => ({ default: m.AdminSettingsPage })));
+const AdminProfilePage = lazy(() => import('@/pages/admin/AdminProfilePage.tsx').then((m) => ({ default: m.AdminProfilePage })));
+const AdminBillingPage = lazy(() => import('@/pages/admin/AdminBillingPage.tsx').then((m) => ({ default: m.AdminBillingPage })));
+const AdminBillsPage = lazy(() => import('@/pages/admin/AdminBillsPage.tsx').then((m) => ({ default: m.AdminBillsPage })));
 
 function PageLoader() {
   return (
@@ -102,6 +123,34 @@ export default function App() {
 
             {/* 404 — catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />
+          </Route>
+
+          {/* Admin panel (protected + role-gated) */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="billing" element={<AdminBillingPage />} />
+              <Route path="bills" element={<AdminBillsPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="orders/:orderId" element={<AdminOrderDetailPage />} />
+              <Route path="products" element={<AdminProductsPage />} />
+              <Route path="products/new" element={<AdminProductFormPage />} />
+              <Route path="products/:productId/edit" element={<AdminProductFormPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users/:uid" element={<AdminUserDetailPage />} />
+              <Route path="users/:uid/edit" element={<AdminUserEditPage />} />
+              <Route path="customers" element={<Navigate to="/admin/users" replace />} />
+              <Route path="customers/:uid" element={<Navigate to="/admin/users" replace />} />
+              <Route path="inventory" element={<Navigate to="/admin/products" replace />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="categories/new" element={<AdminCategoryFormPage />} />
+              <Route path="categories/:categoryId/edit" element={<AdminCategoryFormPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="analytics/products" element={<AdminProductsAnalyticsPage />} />
+              <Route path="content" element={<AdminContentPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
+            </Route>
           </Route>
         </Routes>
       </Suspense>
