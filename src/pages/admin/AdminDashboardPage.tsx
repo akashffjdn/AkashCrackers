@@ -135,6 +135,7 @@ export function AdminDashboardPage() {
                       paddingAngle={2}
                       dataKey="value"
                       stroke="none"
+                      activeShape={undefined as never}
                       label={({ name, value, cx, cy, midAngle, outerRadius: or }) => {
                         const RADIAN = Math.PI / 180;
                         const angle = midAngle ?? 0;
