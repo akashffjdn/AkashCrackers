@@ -9,7 +9,7 @@ import {
   Plus,
   Receipt,
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { formatPrice } from '@/lib/utils.ts';
 import { useAuthStore } from '@/store/auth.ts';
 import { KPICard } from '@/components/admin/KPICard.tsx';
@@ -159,17 +159,6 @@ export function AdminDashboardPage() {
                         <Cell key={entry.name} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: 'var(--color-surface-900, #1a1a2e)',
-                        border: 'none',
-                        borderRadius: '0.75rem',
-                        padding: '8px 14px',
-                        fontSize: '13px',
-                        color: '#fff',
-                      }}
-                      formatter={(value, name) => [`${value} orders`, name]}
-                    />
                   </PieChart>
                 </ResponsiveContainer>
                 {/* Center label */}
