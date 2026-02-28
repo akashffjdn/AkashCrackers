@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw,
-  ChevronRight, ChevronLeft, Star, Volume2, VolumeX, AlertTriangle,
+  ChevronRight, ChevronLeft, Star, Volume2, VolumeX, AlertTriangle, Play,
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
@@ -17,7 +17,9 @@ import { useCartStore } from '@/store/cart.ts';
 import { useAuthStore } from '@/store/auth.ts';
 import { useWishlistStore } from '@/store/wishlist.ts';
 import { products } from '@/data/products.ts';
-import { formatPrice, calculateDiscount, cn } from '@/lib/utils.ts';
+import { formatPrice, calculateDiscount, cn, getYouTubeId } from '@/lib/utils.ts';
+import LiteYouTubeEmbed from 'react-lite-youtube-embed';
+import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 
 const noiseLevelConfig = {
   low: { icon: VolumeX, label: 'Low Noise', color: 'text-emerald-500' },
@@ -102,7 +104,7 @@ export function ProductPage() {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
     if (Math.abs(distance) < 50) return;
-    if (distance > 0 && selectedImage < product.images.length - 1) {
+    if (distance > 0 && selectedImage < mediaCount - 1) {
       setSelectedImage(selectedImage + 1);
     } else if (distance < 0 && selectedImage > 0) {
       setSelectedImage(selectedImage - 1);
@@ -116,6 +118,11 @@ export function ProductPage() {
   const noise = noiseLevelConfig[product.noiseLevel];
   const safety = safetyConfig[product.safetyRating];
   const NoiseIcon = noise.icon;
+
+  const videoId = product.videoUrl ? getYouTubeId(product.videoUrl) : null;
+  const mediaCount = product.images.length + (videoId ? 1 : 0);
+  const videoIndex = videoId ? product.images.length : -1;
+  const isVideoSelected = selectedImage === videoIndex;
 
   const relatedProducts = products
     .filter((p) => p.category === product.category && p.id !== product.id)
@@ -177,20 +184,26 @@ export function ProductPage() {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                <img
-                  src={product.images[selectedImage]}
-                  alt={product.name}
-                  className="h-full w-full object-cover"
-                />
+                {isVideoSelected && videoId ? (
+                  <div className="absolute inset-0 bg-black [&_.yt-lite]:!aspect-auto [&_.yt-lite]:!h-full [&_.yt-lite]:!w-full">
+                    <LiteYouTubeEmbed id={videoId} title={product.name} />
+                  </div>
+                ) : (
+                  <img
+                    src={product.images[selectedImage]}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                  />
+                )}
                 {product.badge && (
                   <div className="absolute top-4 left-4">
                     <Badge type={product.badge} />
                   </div>
                 )}
                 {/* Dot indicators — mobile */}
-                {product.images.length > 1 && (
+                {mediaCount > 1 && (
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 lg:hidden">
-                    {product.images.map((_, i) => (
+                    {Array.from({ length: mediaCount }, (_, i) => (
                       <button
                         key={i}
                         onClick={() => setSelectedImage(i)}
@@ -200,14 +213,14 @@ export function ProductPage() {
                             ? 'w-6 bg-white'
                             : 'w-2 bg-white/50',
                         )}
-                        aria-label={`View image ${i + 1}`}
+                        aria-label={i === videoIndex ? 'View video' : `View image ${i + 1}`}
                       />
                     ))}
                   </div>
                 )}
               </div>
               {/* Thumbnails — desktop only */}
-              {product.images.length > 1 && (
+              {mediaCount > 1 && (
                 <div className="mt-4 hidden lg:flex gap-3">
                   {product.images.map((img, i) => (
                     <button
@@ -223,6 +236,24 @@ export function ProductPage() {
                       <img src={img} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
+                  {videoId && (
+                    <button
+                      onClick={() => setSelectedImage(videoIndex)}
+                      className={cn(
+                        'relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all',
+                        selectedImage === videoIndex
+                          ? 'border-brand-500 shadow-glow'
+                          : 'border-surface-200 dark:border-surface-700 opacity-60 hover:opacity-100',
+                      )}
+                    >
+                      <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} alt="Video" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <div className="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center">
+                          <Play size={12} className="text-white ml-0.5" fill="white" />
+                        </div>
+                      </div>
+                    </button>
+                  )}
                 </div>
               )}
             </motion.div>

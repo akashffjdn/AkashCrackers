@@ -21,6 +21,13 @@ export function slugify(text: string): string {
     .trim();
 }
 
+export function getYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/
+  );
+  return match ? match[1] : null;
+}
+
 export function getStarArray(rating: number): ('full' | 'half' | 'empty')[] {
   const stars: ('full' | 'half' | 'empty')[] = [];
   for (let i = 1; i <= 5; i++) {

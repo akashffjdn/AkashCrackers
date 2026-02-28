@@ -12,7 +12,6 @@ import {
   Globe,
   Eye,
   MousePointerClick,
-  Clock,
   ArrowRight,
 } from 'lucide-react';
 import {
@@ -130,26 +129,6 @@ export function AdminAnalyticsPage() {
   const prevOrders = previousPeriodOrders.length;
   const prevAvg = prevOrders > 0 ? prevRevenue / prevOrders : 0;
   const prevDelivered = previousPeriodOrders.filter((o) => o.status === 'delivered').length;
-
-  // Revenue Breakdown (always calculated from all orders, not filtered)
-  const revenueBreakdown = useMemo(() => {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-
-    let today = 0, week = 0, month = 0, year = 0;
-    orders.forEach((o) => {
-      if (o.status === 'cancelled') return;
-      const d = new Date(o.createdAt);
-      if (d >= todayStart) today += o.total;
-      if (d >= weekStart) week += o.total;
-      if (d >= monthStart) month += o.total;
-      if (d >= yearStart) year += o.total;
-    });
-    return { today, week, month, year };
-  }, [orders]);
 
   // Customer Insights
   const customerInsights = useMemo(() => {
@@ -318,25 +297,6 @@ export function AdminAnalyticsPage() {
           isLoading={isLoading}
           change={dateRange !== 'all' ? getGrowth(deliveredOrders, prevDelivered) : undefined}
         />
-      </div>
-
-      {/* Revenue Breakdown */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {([
-          { label: 'Today', value: revenueBreakdown.today, icon: Clock, color: 'text-emerald-600 bg-emerald-500/10' },
-          { label: 'This Week', value: revenueBreakdown.week, icon: IndianRupee, color: 'text-blue-600 bg-blue-500/10' },
-          { label: 'This Month', value: revenueBreakdown.month, icon: IndianRupee, color: 'text-purple-600 bg-purple-500/10' },
-          { label: 'This Year', value: revenueBreakdown.year, icon: IndianRupee, color: 'text-amber-600 bg-amber-500/10' },
-        ] as const).map((item) => (
-          <KPICard
-            key={item.label}
-            label={item.label}
-            value={formatPrice(item.value)}
-            icon={item.icon}
-            color={item.color}
-            isLoading={isLoading}
-          />
-        ))}
       </div>
 
       {/* Revenue & Orders Over Time — Line Chart */}

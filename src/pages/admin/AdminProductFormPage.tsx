@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, X, Save, ChevronLeft } from 'lucide-react';
-import { slugify } from '@/lib/utils.ts';
+import { Plus, X, Save, ChevronLeft, Upload, Link as LinkIcon, Eye, Play } from 'lucide-react';
+import { slugify, getYouTubeId } from '@/lib/utils.ts';
 import { useAuthStore } from '@/store/auth.ts';
 import { Toggle } from '@/components/atoms/Toggle.tsx';
 import type { ProductCategory, ProductOccasion, ProductBadge } from '@/types/index.ts';
@@ -57,6 +57,7 @@ type FormData = {
   isActive: boolean;
   tags: string[];
   specifications: Spec[];
+  videoUrl: string;
 };
 
 const emptyForm: FormData = {
@@ -84,6 +85,7 @@ const emptyForm: FormData = {
   isActive: true,
   tags: [],
   specifications: [],
+  videoUrl: '',
 };
 
 export function AdminProductFormPage() {
@@ -129,6 +131,7 @@ export function AdminProductFormPage() {
             isActive: product.isActive !== false,
             tags: product.tags ?? [],
             specifications: product.specifications ?? [],
+            videoUrl: product.videoUrl ?? '',
           });
         }
       } catch {
@@ -206,6 +209,7 @@ export function AdminProductFormPage() {
         isActive: form.isActive,
         tags: form.tags.filter(Boolean),
         specifications: form.specifications.filter((s) => s.key && s.value),
+        videoUrl: form.videoUrl.trim() || undefined,
       };
 
       if (isEdit && productId) {
@@ -308,19 +312,10 @@ export function AdminProductFormPage() {
 
           {/* Images */}
           <Card title="Images">
-            <div className="space-y-2">
-              {form.images.map((img, i) => (
-                <div key={i} className="flex gap-2">
-                  <input type="url" value={img} onChange={(e) => handleListChange('images', i, e.target.value)} placeholder="Image URL" className="input-field flex-1" />
-                  <button type="button" onClick={() => removeListItem('images', i)} className="p-2 rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-500/10 transition-colors flex-shrink-0">
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-              <button type="button" onClick={() => addListItem('images')} className="flex items-center gap-1.5 text-body-sm text-brand-600 font-medium hover:underline">
-                <Plus size={14} /> Add Image URL
-              </button>
-            </div>
+            <ImageUploader
+              images={form.images}
+              onChange={(images) => setForm((f) => ({ ...f, images }))}
+            />
           </Card>
 
           {/* Attributes */}
@@ -485,9 +480,202 @@ export function AdminProductFormPage() {
               <p className="text-caption text-surface-400">Press Enter to add</p>
             </div>
           </Card>
+
+          {/* Product Video */}
+          <Card title="Product Video">
+            <div className="space-y-2">
+              <input
+                type="url"
+                value={form.videoUrl}
+                onChange={(e) => setForm((f) => ({ ...f, videoUrl: e.target.value }))}
+                placeholder="Paste YouTube URL"
+                className="input-field"
+              />
+              {(() => {
+                const vid = getYouTubeId(form.videoUrl);
+                if (!vid) return null;
+                return (
+                  <div className="relative rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
+                    <img src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`} alt="Video thumbnail" className="w-full aspect-video object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
+                        <Play size={18} className="text-white ml-0.5" fill="white" />
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: '' }))} className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 text-white hover:bg-red-500 transition-colors">
+                      <X size={12} />
+                    </button>
+                  </div>
+                );
+              })()}
+              <p className="text-caption text-surface-400">Add a YouTube video showing how this cracker works</p>
+            </div>
+          </Card>
         </div>
       </div>
     </form>
+  );
+}
+
+// ─── Image Uploader with URL + File support ───
+
+function ImageUploader({ images, onChange }: { images: string[]; onChange: (images: string[]) => void }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showUrl, setShowUrl] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+
+  const addImage = (src: string) => {
+    if (!src) return;
+    const emptyIdx = images.findIndex((img) => !img);
+    if (emptyIdx >= 0) {
+      const updated = [...images];
+      updated[emptyIdx] = src;
+      onChange(updated);
+    } else {
+      onChange([...images, src]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const updated = images.filter((_, i) => i !== index);
+    onChange(updated.length === 0 ? [''] : updated);
+  };
+
+  const setAsPrimary = (index: number) => {
+    if (index === 0) return;
+    const valid = images.filter(Boolean);
+    const moved = valid[index];
+    const rest = valid.filter((_, i) => i !== index);
+    onChange([moved, ...rest]);
+  };
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') addImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddUrl = () => {
+    const url = urlInput.trim();
+    if (url) { addImage(url); setUrlInput(''); setShowUrl(false); }
+  };
+
+  const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const onDragLeave = () => setIsDragging(false);
+  const onDrop = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); };
+
+  const validImages = images.filter(Boolean);
+
+  // Empty state
+  if (validImages.length === 0) {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center gap-2 py-8 px-4 rounded-xl border-2 border-dashed transition-colors cursor-pointer ${isDragging ? 'border-brand-500 bg-brand-500/5' : 'border-surface-300 dark:border-surface-600 hover:border-brand-400'}`}
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
+        <Upload size={20} className="text-surface-400" />
+        <p className="text-body-sm text-surface-500">Drop images here or <span className="text-brand-500 font-medium">browse</span></p>
+        <div className="flex items-center gap-3 mt-1">
+          <span className="text-caption text-surface-400">PNG, JPG, WEBP</span>
+          <span className="text-surface-300">|</span>
+          <button type="button" onClick={(e) => { e.stopPropagation(); setShowUrl(true); }} className="text-caption text-brand-500 font-medium hover:underline">
+            Paste URL
+          </button>
+        </div>
+        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }} />
+        {showUrl && (
+          <div className="flex gap-2 mt-2 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddUrl(); } }} placeholder="https://..." className="input-field flex-1" autoFocus />
+            <button type="button" onClick={handleAddUrl} disabled={!urlInput.trim()} className="px-3 h-9 rounded-lg bg-brand-500 text-white text-caption font-medium disabled:opacity-40">Add</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Horizontal scroll strip — all same size
+  return (
+    <div
+      className={`space-y-2 ${isDragging ? 'ring-2 ring-brand-500/30 rounded-xl' : ''}`}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        {validImages.map((img, i) => (
+          <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border-2 bg-surface-50 dark:bg-surface-800 flex-shrink-0" style={{ borderColor: i === 0 ? 'var(--color-brand-500, #ef4444)' : 'var(--color-surface-200, #e5e5e5)' }}>
+            <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            {i === 0 && (
+              <span className="absolute top-1 left-1 px-1 py-px rounded text-[8px] font-bold uppercase bg-brand-500 text-white">Main</span>
+            )}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+            <button type="button" onClick={() => setPreviewImg(img)} className="absolute inset-0 m-auto w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80">
+              <Eye size={14} />
+            </button>
+            <button type="button" onClick={() => removeImage(images.indexOf(img))} className="absolute top-0.5 right-0.5 p-0.5 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500">
+              <X size={10} />
+            </button>
+            {i > 0 && (
+              <button type="button" onClick={() => setAsPrimary(i)} className="absolute bottom-0.5 inset-x-0.5 rounded bg-black/60 text-white text-[8px] font-medium text-center py-px opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brand-500">
+                Set main
+              </button>
+            )}
+          </div>
+        ))}
+        {/* Add tile */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-20 h-20 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600 flex flex-col items-center justify-center gap-0.5 text-surface-400 hover:border-brand-400 hover:text-brand-500 transition-colors flex-shrink-0"
+        >
+          <Plus size={16} />
+          <span className="text-[9px] font-medium">Add</span>
+        </button>
+      </div>
+
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }} />
+
+      {/* Bottom actions row */}
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-caption font-medium text-surface-500 hover:text-brand-500 hover:bg-brand-500/5 transition-colors">
+          <Upload size={12} /> Upload
+        </button>
+        <button type="button" onClick={() => setShowUrl(!showUrl)} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-caption font-medium text-surface-500 hover:text-brand-500 hover:bg-brand-500/5 transition-colors">
+          <LinkIcon size={12} /> URL
+        </button>
+        <span className="ml-auto text-caption text-surface-400">{validImages.length} image{validImages.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {showUrl && (
+        <div className="flex gap-2">
+          <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddUrl(); } }} placeholder="Paste image URL and press Enter" className="input-field flex-1" autoFocus />
+          <button type="button" onClick={handleAddUrl} disabled={!urlInput.trim()} className="px-3 h-9 rounded-lg bg-brand-500 text-white text-body-sm font-medium disabled:opacity-40 transition-colors">Add</button>
+        </div>
+      )}
+
+      {/* Image preview modal */}
+      {previewImg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setPreviewImg(null)}>
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <img src={previewImg} alt="Preview" className="max-w-full max-h-[85vh] rounded-xl object-contain" />
+            <button type="button" onClick={() => setPreviewImg(null)} className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white dark:bg-surface-800 text-surface-700 dark:text-surface-200 shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

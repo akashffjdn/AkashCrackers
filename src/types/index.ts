@@ -21,6 +21,7 @@ export interface Product {
   duration?: string;
   isNew?: boolean;
   isFeatured?: boolean;
+  videoUrl?: string;
 }
 
 export type ProductCategory =

@@ -27,6 +27,7 @@ export const products: Product[] = [
     effects: ['Chrysanthemum', 'Peony', 'Brocade Crown', 'Glitter'],
     duration: '90 seconds',
     isFeatured: true,
+    videoUrl: 'https://www.youtube.com/watch?v=wVohGRfGzP0',
   },
   {
     id: 'golden-cascade-pro',
@@ -54,6 +55,7 @@ export const products: Product[] = [
     effects: ['Gold Rain', 'Crackling', 'Shimmer', 'Tail Effects'],
     duration: '60 seconds',
     isFeatured: true,
+    videoUrl: 'https://www.youtube.com/watch?v=PAa3tHM9AFY',
   },
   {
     id: 'phoenix-rocket-pack',
@@ -81,6 +83,7 @@ export const products: Product[] = [
     effects: ['Star Shell', 'Color Burst', 'Silver Strobe', 'Whistle'],
     duration: '5 seconds each',
     isFeatured: true,
+    videoUrl: 'https://www.youtube.com/watch?v=sge2DFR02Nw',
   },
   {
     id: 'royal-sparkler-collection',
@@ -108,6 +111,7 @@ export const products: Product[] = [
     effects: ['Gold Spark', 'Silver Spark', 'Multi-Color'],
     duration: '60 seconds each',
     isFeatured: true,
+    videoUrl: 'https://www.youtube.com/watch?v=8e3ZqxRsaas',
   },
   {
     id: 'celestial-fountain-duo',
@@ -135,6 +139,7 @@ export const products: Product[] = [
     effects: ['Color Change', 'Crackling Stars', 'Silver Jets'],
     duration: '120 seconds',
     isNew: true,
+    videoUrl: 'https://www.youtube.com/watch?v=dbrdkZ0PYew',
   },
   {
     id: 'thunder-king-roman-candle',
@@ -159,6 +164,7 @@ export const products: Product[] = [
     noiseLevel: 'medium',
     effects: ['Star Shell', 'Color Burst', 'Report'],
     duration: '30 seconds',
+    videoUrl: 'https://www.youtube.com/watch?v=3HwpFyEB08c',
   },
   {
     id: 'ground-chakra-mega',
@@ -185,6 +191,7 @@ export const products: Product[] = [
     noiseLevel: 'low',
     effects: ['Spinning Fire', 'Color Change', 'Crackling'],
     duration: '45 seconds',
+    videoUrl: 'https://www.youtube.com/watch?v=jGKns3tR0hg',
   },
   {
     id: 'diwali-mega-combo',
@@ -212,6 +219,7 @@ export const products: Product[] = [
     effects: ['Full Spectrum', 'Ground to Sky', 'Finale Sequence'],
     duration: '30 minutes',
     isFeatured: true,
+    videoUrl: 'https://www.youtube.com/watch?v=8e3ZqxRsaas',
   },
   {
     id: 'silver-rain-fountain',
@@ -237,6 +245,7 @@ export const products: Product[] = [
     noiseLevel: 'low',
     effects: ['Silver Rain', 'White Spark', 'Gentle Crackle'],
     duration: '90 seconds',
+    videoUrl: 'https://www.youtube.com/watch?v=dbrdkZ0PYew',
   },
   {
     id: 'novelty-fun-pack',
@@ -263,6 +272,7 @@ export const products: Product[] = [
     noiseLevel: 'low',
     effects: ['Smoke Colors', 'Snake Effect', 'Pop Sound', 'Mini Fountain'],
     duration: 'Various',
+    videoUrl: 'https://www.youtube.com/watch?v=3HwpFyEB08c',
   },
   {
     id: 'wedding-grand-finale',
@@ -290,6 +300,7 @@ export const products: Product[] = [
     effects: ['Cold Spark', 'Gold Rain', 'Silver Jets', 'Aerial Peony'],
     duration: '15 minutes total',
     isFeatured: true,
+    videoUrl: 'https://www.youtube.com/watch?v=wVohGRfGzP0',
   },
   {
     id: 'new-year-countdown-kit',
@@ -317,6 +328,7 @@ export const products: Product[] = [
     effects: ['Multi-Color Burst', 'Strobe', 'Willow', 'Grand Finale'],
     duration: '70 seconds',
     isNew: true,
+    videoUrl: 'https://www.youtube.com/watch?v=sge2DFR02Nw',
   },
 ];
 
