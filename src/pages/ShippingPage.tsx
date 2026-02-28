@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
-import { Truck, Clock, MapPin } from 'lucide-react';
-import { PolicyLayout, PolicySection } from '@/components/atoms/PolicyLayout.tsx';
+import {
+  Truck, Clock, MapPin, Package, Shield,
+  Globe, Navigation, AlertTriangle,
+} from 'lucide-react';
+import { PolicyLayout, type PolicySection } from '@/components/atoms/PolicyLayout.tsx';
 import { SEO } from '@/components/SEO.tsx';
 
 const shippingOptions = [
@@ -9,16 +12,14 @@ const shippingOptions = [
   { icon: MapPin, method: 'Same Day (Select Cities)', time: 'Same Day', cost: '₹399', desc: 'Available in Sivakasi, Chennai, Mumbai, Delhi, Bangalore during festival season.' },
 ];
 
-export function ShippingPage() {
-  return (
-    <PolicyLayout title="Shipping Policy" eyebrow="Delivery" lastUpdated="February 1, 2026">
-      <SEO
-        title="Shipping Policy — Free Delivery Above ₹999"
-        description="Akash Crackers shipping policy. Free standard delivery above ₹999, express 2-3 day shipping, and same-day delivery in select cities. Pan-India coverage."
-        canonical="/shipping"
-      />
-      {/* Shipping Options Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+const sections: PolicySection[] = [
+  {
+    id: 'shipping-options',
+    icon: Truck,
+    title: 'Shipping Options',
+    summary: 'Free standard delivery above ₹999, express 2-3 day shipping, and same-day delivery in select cities.',
+    content: (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {shippingOptions.map((opt, i) => {
           const Icon = opt.icon;
           return (
@@ -41,13 +42,27 @@ export function ShippingPage() {
           );
         })}
       </div>
-
-      <PolicySection title="Order Processing">
+    ),
+  },
+  {
+    id: 'order-processing',
+    icon: Clock,
+    title: 'Order Processing',
+    summary: 'Orders are processed within 24-48 hours. During festivals, it may take up to 72 hours.',
+    content: (
+      <>
         <p>All orders are processed within 24-48 hours of payment confirmation. During peak festival seasons (Diwali: October-November, New Year: December), processing may take up to 72 hours due to high demand.</p>
         <p>You will receive an email confirmation with your order ID immediately after placing your order, followed by a shipping confirmation with tracking details once your package is dispatched.</p>
-      </PolicySection>
-
-      <PolicySection title="Packaging & Safety">
+      </>
+    ),
+  },
+  {
+    id: 'packaging',
+    icon: Package,
+    title: 'Packaging & Safety',
+    summary: 'All fireworks are packed with flame-retardant materials and comply with Indian explosives transport regulations.',
+    content: (
+      <>
         <p>All fireworks are packed in compliance with Indian explosives transport regulations. Our packaging includes:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li>Flame-retardant outer packaging</li>
@@ -57,21 +72,59 @@ export function ShippingPage() {
           <li>Temperature indicators for heat-sensitive products</li>
         </ul>
         <p>We use only licensed carriers authorized for pyrotechnic transport under the Indian Explosives Act.</p>
-      </PolicySection>
-
-      <PolicySection title="Delivery Coverage">
+      </>
+    ),
+  },
+  {
+    id: 'coverage',
+    icon: Globe,
+    title: 'Delivery Coverage',
+    summary: 'We deliver across all 28 states and 8 union territories. Some remote areas may have extended timelines.',
+    content: (
+      <>
         <p>We deliver across all 28 states and 8 union territories of India. Some remote or restricted areas may have limited availability or extended delivery timelines. Enter your PIN code during checkout to confirm serviceability and estimated delivery dates.</p>
         <p className="font-medium text-surface-900 dark:text-surface-100">Note: Certain states may have seasonal restrictions on fireworks transport. We will notify you if your order is affected and offer a full refund or rescheduled delivery.</p>
-      </PolicySection>
-
-      <PolicySection title="Tracking Your Order">
-        <p>Once your order is shipped, you'll receive a tracking link via email and SMS. You can also track your order anytime on our <a href="/track-order" className="text-brand-500 hover:underline">Track Order</a> page using your Order ID.</p>
-      </PolicySection>
-
-      <PolicySection title="Damaged or Missing Items">
+      </>
+    ),
+  },
+  {
+    id: 'tracking',
+    icon: Navigation,
+    title: 'Tracking Your Order',
+    summary: 'Track your package via email, SMS, or our Track Order page using your Order ID.',
+    content: (
+      <p>Once your order is shipped, you'll receive a tracking link via email and SMS. You can also track your order anytime on our <a href="/track-order" className="text-brand-500 hover:underline font-medium">Track Order</a> page using your Order ID.</p>
+    ),
+  },
+  {
+    id: 'damaged',
+    icon: AlertTriangle,
+    title: 'Damaged or Missing Items',
+    summary: 'Report damaged or missing items within 48 hours for immediate replacement or full refund.',
+    content: (
+      <>
         <p>If your package arrives damaged or items are missing, please contact us within 48 hours of delivery with photographs. We will arrange an immediate replacement or full refund at no cost to you.</p>
-        <p>Contact: <a href="mailto:hello@akashcrackers.com" className="text-brand-500 hover:underline">hello@akashcrackers.com</a> or call <span className="font-medium">+91 98765 43210</span></p>
-      </PolicySection>
-    </PolicyLayout>
+        <p>Contact: <a href="mailto:hello@akashcrackers.com" className="text-brand-500 hover:underline font-medium">hello@akashcrackers.com</a> or call <span className="font-medium text-surface-900 dark:text-surface-100">+91 98765 43210</span></p>
+      </>
+    ),
+  },
+];
+
+export function ShippingPage() {
+  return (
+    <>
+      <SEO
+        title="Shipping Policy — Free Delivery Above ₹999"
+        description="Akash Crackers shipping policy. Free standard delivery above ₹999, express 2-3 day shipping, and same-day delivery in select cities. Pan-India coverage."
+        canonical="/shipping"
+      />
+      <PolicyLayout
+        title="Shipping Policy"
+        eyebrow="Delivery"
+        description="Everything you need to know about how we deliver your fireworks safely and on time."
+        lastUpdated="February 1, 2026"
+        sections={sections}
+      />
+    </>
   );
 }

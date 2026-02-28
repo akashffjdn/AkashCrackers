@@ -93,10 +93,10 @@ export function ContactPage() {
         </Container>
       </section>
 
-      {/* Contact Cards */}
-      <section className="py-10 bg-surface-50 dark:bg-surface-950">
+      {/* Contact Cards + Form + Social */}
+      <section className="py-10 lg:py-14 bg-surface-50 dark:bg-surface-950">
         <Container size="wide">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             {contactMethods.map((method, i) => {
               const Icon = method.icon;
               return (
@@ -123,12 +123,7 @@ export function ContactPage() {
               );
             })}
           </div>
-        </Container>
-      </section>
 
-      {/* Form + Social */}
-      <section className="section-padding bg-surface-50 dark:bg-surface-950">
-        <Container size="wide">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16">
             {/* Form */}
             <div className="lg:col-span-3">

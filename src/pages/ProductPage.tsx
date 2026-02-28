@@ -123,6 +123,12 @@ export function ProductPage() {
   const mediaCount = product.images.length + (videoId ? 1 : 0);
   const videoIndex = videoId ? product.images.length : -1;
   const isVideoSelected = selectedImage === videoIndex;
+  const [videoActive, setVideoActive] = useState(false);
+
+  // Reset video active state when navigating away from video slide
+  useEffect(() => {
+    if (!isVideoSelected) setVideoActive(false);
+  }, [isVideoSelected]);
 
   const relatedProducts = products
     .filter((p) => p.category === product.category && p.id !== product.id)
@@ -185,8 +191,39 @@ export function ProductPage() {
                 onTouchEnd={handleTouchEnd}
               >
                 {isVideoSelected && videoId ? (
-                  <div className="absolute inset-0 bg-black [&_.yt-lite]:!aspect-auto [&_.yt-lite]:!h-full [&_.yt-lite]:!w-full">
-                    <LiteYouTubeEmbed id={videoId} title={product.name} />
+                  <div className="absolute inset-0 bg-black">
+                    {videoActive ? (
+                      <>
+                        <div className="h-full w-full [&_.yt-lite]:!aspect-auto [&_.yt-lite]:!h-full [&_.yt-lite]:!w-full">
+                          <LiteYouTubeEmbed id={videoId} title={product.name} />
+                        </div>
+                        {/* Left arrow — navigate back to images when iframe blocks swipe */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedImage(selectedImage - 1)}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-sm active:scale-90 transition-transform lg:hidden"
+                        >
+                          <ChevronLeft size={22} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <img
+                          src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                          alt="Video thumbnail"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setVideoActive(true)}
+                          className="absolute inset-0 z-10 flex items-center justify-center bg-black/20"
+                        >
+                          <div className="w-16 h-16 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
+                            <Play size={28} className="text-white ml-1" fill="white" />
+                          </div>
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <img
@@ -447,10 +484,10 @@ export function ProductPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-body-sm font-semibold text-surface-900 dark:text-surface-100 truncate">
-                    {product.name}
+                    {product.name}{quantity > 1 && ` × ${quantity}`}
                   </p>
                   <p className="text-body-sm font-bold text-brand-600 dark:text-brand-400">
-                    {formatPrice(product.price)}
+                    {formatPrice(product.price * quantity)}
                   </p>
                 </div>
                 <Button onClick={handleAddToCart} size="md" className="flex-shrink-0">

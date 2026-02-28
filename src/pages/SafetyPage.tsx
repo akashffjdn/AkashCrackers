@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import {
-  Shield, AlertTriangle, Eye, Users, Flame,
-  Droplets, MapPin, Phone, Heart, CheckCircle, XCircle,
+  Shield, AlertTriangle, Eye, Flame,
+  Droplets, MapPin, Phone, CheckCircle, XCircle,
+  Sparkles, Rocket, Package, CircleDot, Star,
+  Thermometer, Lock, CloudRain, Square,
 } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { SEO } from '@/components/SEO.tsx';
@@ -14,6 +16,13 @@ const fadeUp = {
   viewport: { once: true, amount: 0.2 },
   transition: { duration: 0.5 },
 };
+
+const stats = [
+  { value: '2,000°F', label: 'Sparklers burn hot enough to melt glass', icon: Thermometer },
+  { value: '20 min', label: 'Wait before approaching a dud firework', icon: AlertTriangle },
+  { value: '15 ft', label: 'Minimum safe distance for ground fireworks', icon: MapPin },
+  { value: '100 ft', label: 'Safe viewing distance for aerial shells', icon: Eye },
+];
 
 const safetyDos = [
   'Read all instructions on the label before use',
@@ -37,11 +46,113 @@ const safetyDonts = [
   'Never lean over a firework while lighting it',
 ];
 
+const categoryCards = [
+  {
+    icon: Sparkles,
+    name: 'Sparklers',
+    color: 'border-emerald-500/30 bg-emerald-500/5',
+    iconColor: 'bg-emerald-500/10 text-emerald-500',
+    distance: '2 ft',
+    tips: ['Hold at arm\'s length, away from body', 'Never hand to children under 5', 'Drop spent sparklers in a water bucket — don\'t touch the wire'],
+  },
+  {
+    icon: Star,
+    name: 'Fountains & Cones',
+    color: 'border-blue-500/30 bg-blue-500/5',
+    iconColor: 'bg-blue-500/10 text-blue-500',
+    distance: '15 ft',
+    tips: ['Place on flat, hard surface before lighting', 'Never hold in hand while lit', 'Keep a 15 ft radius clear of people and objects'],
+  },
+  {
+    icon: Rocket,
+    name: 'Rockets & Missiles',
+    color: 'border-amber-500/30 bg-amber-500/5',
+    iconColor: 'bg-amber-500/10 text-amber-500',
+    distance: '30 ft',
+    tips: ['Launch from a stable tube or bottle anchored in sand', 'Aim straight up, never at an angle toward people', 'Clear the area before lighting — use a long lighter'],
+  },
+  {
+    icon: CircleDot,
+    name: 'Ground Spinners',
+    color: 'border-violet-500/30 bg-violet-500/5',
+    iconColor: 'bg-violet-500/10 text-violet-500',
+    distance: '10 ft',
+    tips: ['Place on smooth, flat ground — avoid gravel', 'Clear a wide area as they move unpredictably', 'Keep children and pets well back'],
+  },
+  {
+    icon: Package,
+    name: 'Multi-Shot Cakes',
+    color: 'border-orange-500/30 bg-orange-500/5',
+    iconColor: 'bg-orange-500/10 text-orange-500',
+    distance: '50 ft',
+    tips: ['Place on firm, level ground — never on a table', 'Light the single fuse and move away immediately', 'Do NOT approach until all shots have fired and 5 minutes have passed'],
+  },
+  {
+    icon: Star,
+    name: 'Aerial Shells',
+    color: 'border-red-500/30 bg-red-500/5',
+    iconColor: 'bg-red-500/10 text-red-500',
+    distance: '100 ft',
+    tips: ['For experienced adults only — requires a mortar tube', 'Clear a 100 ft perimeter around launch site', 'Never look down the tube after a misfire'],
+  },
+];
+
 const emergencySteps = [
-  { icon: Droplets, title: 'Minor Burns', desc: 'Run cool (not cold) water over the burn for at least 10 minutes. Cover with a sterile, non-stick bandage. Do not apply ice, butter, or ointments.' },
-  { icon: Eye, title: 'Eye Injury', desc: 'Do NOT rub or touch the eye. Cover with a rigid shield (paper cup) and seek emergency medical attention immediately.' },
-  { icon: Flame, title: 'Fire Emergency', desc: 'Call fire services (101) immediately. Use a fire extinguisher or water if safely possible. Evacuate the area and account for all persons.' },
-  { icon: Phone, title: 'Serious Injury', desc: 'Call emergency services (112) immediately. Do not move the injured person unless there is immediate danger. Apply pressure to any bleeding wounds.' },
+  {
+    icon: Droplets,
+    title: 'Minor Burns',
+    color: 'border-amber-500/30',
+    iconColor: 'bg-amber-500/10 text-amber-500',
+    steps: [
+      'Run cool (not cold) water over the burn for 10+ minutes',
+      'Cover with a sterile, non-stick bandage',
+      'Take over-the-counter pain relief if needed',
+      'Do NOT apply ice, butter, or ointments',
+    ],
+  },
+  {
+    icon: Eye,
+    title: 'Eye Injury',
+    color: 'border-red-500/30',
+    iconColor: 'bg-red-500/10 text-red-500',
+    steps: [
+      'Do NOT rub or touch the eye',
+      'Do NOT attempt to remove any debris',
+      'Cover with a rigid shield (e.g. paper cup)',
+      'Seek emergency medical attention immediately',
+    ],
+  },
+  {
+    icon: Flame,
+    title: 'Fire Emergency',
+    color: 'border-orange-500/30',
+    iconColor: 'bg-orange-500/10 text-orange-500',
+    steps: [
+      'Call fire services (101) immediately',
+      'Evacuate all people from the area',
+      'Use a fire extinguisher only if safe to do so',
+      'Account for all persons — do not re-enter',
+    ],
+  },
+  {
+    icon: Phone,
+    title: 'Serious Injury',
+    color: 'border-red-500/30',
+    iconColor: 'bg-red-500/10 text-red-500',
+    steps: [
+      'Call emergency services (112) immediately',
+      'Do NOT move the injured person',
+      'Apply pressure to any bleeding wounds',
+      'Keep the person calm until help arrives',
+    ],
+  },
+];
+
+const storageRules = [
+  { icon: Thermometer, title: 'Cool & Dry', desc: 'Store below 30°C in a dry, well-ventilated area away from direct sunlight.' },
+  { icon: Lock, title: 'Locked Away', desc: 'Keep out of reach of children and pets. Use a locked cabinet or high shelf.' },
+  { icon: Flame, title: 'Away from Heat', desc: 'Never store near stoves, heaters, electrical panels, or gas cylinders.' },
+  { icon: CloudRain, title: 'Moisture-Free', desc: 'Damp fireworks are unpredictable. Keep sealed in original packaging until use.' },
 ];
 
 export function SafetyPage() {
@@ -52,6 +163,16 @@ export function SafetyPage() {
         description="Essential fireworks safety guidelines from Akash Crackers. Learn proper handling, storage, safety ratings, emergency first aid, and important dos and don'ts."
         canonical="/safety"
       />
+
+      {/* Floating emergency button */}
+      <a
+        href="tel:112"
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 active:scale-95 transition-all lg:bottom-6 lg:right-6"
+      >
+        <Phone size={18} />
+        <span className="text-body-sm font-bold">Emergency 112</span>
+      </a>
+
       {/* Hero */}
       <section className="relative py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=30')] bg-cover bg-center opacity-10" />
@@ -71,17 +192,39 @@ export function SafetyPage() {
         </Container>
       </section>
 
+      {/* Statistics */}
+      <section className="py-8 bg-surface-900 dark:bg-surface-800">
+        <Container size="wide">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} className="text-center py-3">
+                  <Icon size={20} className="text-brand-400 mx-auto mb-2" />
+                  <p className="font-display font-bold text-heading-md lg:text-heading-lg text-white">{stat.value}</p>
+                  <p className="mt-1 text-caption lg:text-body-sm text-surface-400">{stat.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        </Container>
+      </section>
+
       {/* Do's and Don'ts */}
       <section className="section-padding bg-surface-50 dark:bg-surface-950">
         <Container size="wide">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <motion.div {...fadeUp} className="text-center mb-10">
+            <span className="inline-block mb-3 text-label font-bold uppercase tracking-widest text-brand-500">Know the Rules</span>
+            <h2 className="font-display font-bold text-display-sm text-surface-900 dark:text-surface-50">Do's & Don'ts</h2>
+          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Do's */}
             <motion.div {...fadeUp} className="bg-white dark:bg-surface-900 rounded-2xl p-6 lg:p-8 border border-emerald-500/20">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                   <CheckCircle size={22} className="text-emerald-500" />
                 </div>
-                <h2 className="font-display font-bold text-heading-md text-surface-900 dark:text-surface-50">Safety Do's</h2>
+                <h3 className="font-display font-bold text-heading-md text-surface-900 dark:text-surface-50">Safety Do's</h3>
               </div>
               <div className="space-y-3">
                 {safetyDos.map((item, i) => (
@@ -106,7 +249,7 @@ export function SafetyPage() {
                 <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
                   <XCircle size={22} className="text-red-500" />
                 </div>
-                <h2 className="font-display font-bold text-heading-md text-surface-900 dark:text-surface-50">Safety Don'ts</h2>
+                <h3 className="font-display font-bold text-heading-md text-surface-900 dark:text-surface-50">Safety Don'ts</h3>
               </div>
               <div className="space-y-3">
                 {safetyDonts.map((item, i) => (
@@ -128,14 +271,96 @@ export function SafetyPage() {
         </Container>
       </section>
 
-      {/* Emergency */}
+      {/* Category-Specific Safety */}
       <section className="section-padding bg-white dark:bg-surface-900">
         <Container size="wide">
-          <motion.div {...fadeUp} className="text-center mb-12">
+          <motion.div {...fadeUp} className="text-center mb-10">
+            <span className="inline-block mb-3 text-label font-bold uppercase tracking-widest text-brand-500">By Product Type</span>
+            <h2 className="font-display font-bold text-display-sm text-surface-900 dark:text-surface-50">Category Safety Guide</h2>
+            <p className="mt-3 text-body-md text-surface-500 max-w-lg mx-auto">
+              Different fireworks require different precautions. Know the safe distance and handling for each type.
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {categoryCards.map((cat, i) => {
+              const Icon = cat.icon;
+              return (
+                <motion.div
+                  key={cat.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  viewport={{ once: true }}
+                  className={cn('rounded-2xl p-6 border', cat.color)}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', cat.iconColor)}>
+                        <Icon size={20} />
+                      </div>
+                      <h3 className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">{cat.name}</h3>
+                    </div>
+                    <span className="text-caption font-bold uppercase tracking-wider text-surface-400 bg-surface-100 dark:bg-surface-800 px-2.5 py-1 rounded-lg">
+                      {cat.distance}
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+                    {cat.tips.map((tip) => (
+                      <li key={tip} className="flex items-start gap-2 text-body-sm text-surface-600 dark:text-surface-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-surface-400 flex-shrink-0 mt-1.5" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              );
+            })}
+          </div>
+        </Container>
+      </section>
+
+      {/* Storage & Handling */}
+      <section className="section-padding bg-white dark:bg-surface-900">
+        <Container size="wide">
+          <motion.div {...fadeUp} className="text-center mb-10">
+            <span className="inline-block mb-3 text-label font-bold uppercase tracking-widest text-brand-500">Storage</span>
+            <h2 className="font-display font-bold text-display-sm text-surface-900 dark:text-surface-50">Safe Storage & Handling</h2>
+          </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {storageRules.map((rule, i) => {
+              const Icon = rule.icon;
+              return (
+                <motion.div
+                  key={rule.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                  className="p-6 rounded-2xl bg-surface-50 dark:bg-surface-850 border border-surface-200 dark:border-surface-800 text-center"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Icon size={24} className="text-brand-500" />
+                  </div>
+                  <h3 className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">{rule.title}</h3>
+                  <p className="mt-2 text-body-sm text-surface-500 dark:text-surface-400">{rule.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </Container>
+      </section>
+
+      {/* Emergency First Aid */}
+      <section className="section-padding bg-surface-50 dark:bg-surface-950">
+        <Container size="wide">
+          <motion.div {...fadeUp} className="text-center mb-10">
             <span className="inline-block mb-3 text-label font-bold uppercase tracking-widest text-red-500">Be Prepared</span>
             <h2 className="font-display font-bold text-display-sm text-surface-900 dark:text-surface-50">Emergency First Aid</h2>
+            <p className="mt-3 text-body-md text-surface-500 max-w-lg mx-auto">
+              Know what to do in an emergency. Follow these steps while waiting for professional help.
+            </p>
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {emergencySteps.map((step, i) => {
               const Icon = step.icon;
               return (
@@ -145,13 +370,24 @@ export function SafetyPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  className="p-6 rounded-2xl bg-surface-50 dark:bg-surface-850 border border-surface-200 dark:border-surface-800"
+                  className={cn('p-6 rounded-2xl bg-white dark:bg-surface-900 border', step.color)}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                    <Icon size={24} className="text-red-500" />
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', step.iconColor)}>
+                      <Icon size={20} />
+                    </div>
+                    <h3 className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">{step.title}</h3>
                   </div>
-                  <h3 className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">{step.title}</h3>
-                  <p className="mt-2 text-body-sm text-surface-500 dark:text-surface-400">{step.desc}</p>
+                  <ol className="space-y-2">
+                    {step.steps.map((s, j) => (
+                      <li key={j} className="flex items-start gap-3 text-body-sm text-surface-600 dark:text-surface-400">
+                        <span className="w-5 h-5 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-surface-500 mt-0.5">
+                          {j + 1}
+                        </span>
+                        {s}
+                      </li>
+                    ))}
+                  </ol>
                 </motion.div>
               );
             })}
@@ -159,38 +395,10 @@ export function SafetyPage() {
         </Container>
       </section>
 
-      {/* Safety Ratings */}
-      <section className="section-padding bg-surface-50 dark:bg-surface-950">
-        <Container size="narrow">
-          <motion.div {...fadeUp} className="text-center mb-12">
-            <h2 className="font-display font-bold text-heading-lg text-surface-900 dark:text-surface-50">Understanding Safety Ratings</h2>
-          </motion.div>
-          <div className="space-y-4">
-            {[
-              { level: 'Family Safe', color: 'border-emerald-500/30 bg-emerald-500/5', badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', icon: Heart, desc: 'Suitable for children under adult supervision. Low noise, minimal smoke. Includes sparklers, smoke balls, pop-pops, and gentle fountains.' },
-              { level: 'Standard', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', icon: Users, desc: 'For adults and teens. Medium noise and effects. Includes rockets, Roman candles, and multi-shot cakes. Keep safe distance as labeled.' },
-              { level: 'Professional', color: 'border-red-500/30 bg-red-500/5', badge: 'bg-red-500/10 text-red-600 dark:text-red-400', icon: AlertTriangle, desc: 'For experienced users and licensed professionals only. High-power aerial shells and display-grade products. Requires open space and safety perimeter.' },
-            ].map((rating) => {
-              const Icon = rating.icon;
-              return (
-                <div key={rating.level} className={cn('flex items-start gap-4 p-6 rounded-2xl border', rating.color)}>
-                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', rating.badge)}>
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-heading-sm text-surface-900 dark:text-surface-50">{rating.level}</h3>
-                    <p className="mt-1 text-body-md text-surface-600 dark:text-surface-400">{rating.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Container>
-      </section>
-
-      {/* Emergency Numbers */}
-      <section className="py-12 bg-red-600">
+      {/* Emergency Numbers Banner */}
+      <section className="py-10 bg-red-600">
         <Container size="wide">
+          <p className="text-center text-body-sm font-medium text-white/70 mb-5 uppercase tracking-wider">Emergency Numbers — Save These</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-12 text-white">
             <div className="flex items-center gap-3">
               <Phone size={20} />
@@ -209,7 +417,7 @@ export function SafetyPage() {
             </div>
             <div className="w-px h-8 bg-white/20 hidden sm:block" />
             <div className="flex items-center gap-3">
-              <MapPin size={20} />
+              <Square size={20} />
               <div>
                 <p className="text-body-sm text-white/70">Ambulance</p>
                 <p className="font-display font-bold text-heading-sm">108</p>

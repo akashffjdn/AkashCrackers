@@ -3,6 +3,7 @@ import { Navbar } from '@/components/organisms/Navbar.tsx';
 import { Footer } from '@/components/organisms/Footer.tsx';
 import { CartDrawer } from '@/components/organisms/CartDrawer.tsx';
 import { ScrollToTop } from '@/components/atoms/ScrollToTop.tsx';
+import { WhatsAppButton } from '@/components/atoms/WhatsAppButton.tsx';
 
 export function MainLayout() {
   return (
@@ -14,6 +15,7 @@ export function MainLayout() {
       </main>
       <Footer />
       <CartDrawer />
+      <WhatsAppButton />
     </div>
   );
 }

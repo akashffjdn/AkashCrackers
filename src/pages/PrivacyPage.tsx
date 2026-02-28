@@ -1,20 +1,30 @@
-import { PolicyLayout, PolicySection } from '@/components/atoms/PolicyLayout.tsx';
+import {
+  Shield, Eye, Database, Share2, Lock,
+  Cookie, UserCheck, Clock, RefreshCw, Mail,
+} from 'lucide-react';
+import { PolicyLayout, type PolicySection } from '@/components/atoms/PolicyLayout.tsx';
 import { SEO } from '@/components/SEO.tsx';
 
-export function PrivacyPage() {
-  return (
-    <PolicyLayout title="Privacy Policy" eyebrow="Your Privacy" lastUpdated="February 1, 2026">
-      <SEO
-        title="Privacy Policy"
-        description="Akash Crackers privacy policy. Learn how we collect, use, and protect your personal information when you use our website and services."
-        canonical="/privacy"
-      />
-      <PolicySection title="Introduction">
+const sections: PolicySection[] = [
+  {
+    id: 'introduction',
+    icon: Shield,
+    title: 'Introduction',
+    summary: 'We are committed to protecting your personal information and privacy.',
+    content: (
+      <>
         <p>Akash Crackers ("we", "our", "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy describes how we collect, use, and protect information when you visit our website (akashcrackers.com) or make a purchase.</p>
         <p>By using our services, you consent to the data practices described in this policy.</p>
-      </PolicySection>
-
-      <PolicySection title="Information We Collect">
+      </>
+    ),
+  },
+  {
+    id: 'info-collect',
+    icon: Eye,
+    title: 'Information We Collect',
+    summary: 'We collect personal details you provide (name, email, address) and automatic data (IP, browser, cookies).',
+    content: (
+      <>
         <p><strong>Personal Information:</strong> When you place an order or create an account, we collect:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li>Full name, email address, and phone number</li>
@@ -29,9 +39,16 @@ export function PrivacyPage() {
           <li>Referral source and search queries</li>
           <li>Cookies and similar tracking technologies</li>
         </ul>
-      </PolicySection>
-
-      <PolicySection title="How We Use Your Information">
+      </>
+    ),
+  },
+  {
+    id: 'how-we-use',
+    icon: Database,
+    title: 'How We Use Your Information',
+    summary: 'We use your data to process orders, communicate with you, improve our services, and comply with the law.',
+    content: (
+      <>
         <p>We use the collected information for the following purposes:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li><strong>Order fulfillment:</strong> Processing, shipping, and delivering your orders</li>
@@ -40,9 +57,16 @@ export function PrivacyPage() {
           <li><strong>Marketing:</strong> Sending promotional offers and newsletters (only with your consent; you can unsubscribe at any time)</li>
           <li><strong>Legal compliance:</strong> Meeting regulatory requirements related to the sale and transport of pyrotechnic products</li>
         </ul>
-      </PolicySection>
-
-      <PolicySection title="Data Sharing">
+      </>
+    ),
+  },
+  {
+    id: 'data-sharing',
+    icon: Share2,
+    title: 'Data Sharing',
+    summary: 'We never sell your data. We only share with shipping partners, payment processors, and when legally required.',
+    content: (
+      <>
         <p>We do not sell, trade, or rent your personal information. We may share data with:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li><strong>Shipping partners:</strong> Name, phone, and address for delivery purposes</li>
@@ -50,9 +74,16 @@ export function PrivacyPage() {
           <li><strong>Analytics providers:</strong> Anonymized usage data for website improvement</li>
           <li><strong>Legal authorities:</strong> If required by law, court order, or government request</li>
         </ul>
-      </PolicySection>
-
-      <PolicySection title="Data Security">
+      </>
+    ),
+  },
+  {
+    id: 'data-security',
+    icon: Lock,
+    title: 'Data Security',
+    summary: 'We use SSL encryption, PCI-DSS compliant payments, and regular security audits to protect your data.',
+    content: (
+      <>
         <p>We implement industry-standard security measures to protect your information:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li>SSL/TLS encryption for all data transmission</li>
@@ -61,9 +92,16 @@ export function PrivacyPage() {
           <li>Regular security audits and vulnerability assessments</li>
           <li>Role-based access controls for internal data access</li>
         </ul>
-      </PolicySection>
-
-      <PolicySection title="Cookies">
+      </>
+    ),
+  },
+  {
+    id: 'cookies',
+    icon: Cookie,
+    title: 'Cookies',
+    summary: 'We use essential, preference, and analytics cookies. You can control them via your browser.',
+    content: (
+      <>
         <p>We use cookies and similar technologies to enhance your browsing experience. These include:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li><strong>Essential cookies:</strong> Required for website functionality (cart, login sessions)</li>
@@ -71,9 +109,16 @@ export function PrivacyPage() {
           <li><strong>Analytics cookies:</strong> Help us understand how visitors use our website</li>
         </ul>
         <p>You can control cookie settings through your browser. Disabling essential cookies may affect website functionality.</p>
-      </PolicySection>
-
-      <PolicySection title="Your Rights">
+      </>
+    ),
+  },
+  {
+    id: 'your-rights',
+    icon: UserCheck,
+    title: 'Your Rights',
+    summary: 'You can access, correct, delete your data, or withdraw marketing consent at any time.',
+    content: (
+      <>
         <p>Under applicable Indian data protection laws, you have the right to:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li>Access the personal data we hold about you</li>
@@ -83,21 +128,60 @@ export function PrivacyPage() {
           <li>Lodge a complaint with the relevant data protection authority</li>
         </ul>
         <p>To exercise these rights, contact us at hello@akashcrackers.com.</p>
-      </PolicySection>
-
-      <PolicySection title="Data Retention">
-        <p>We retain your personal information for as long as necessary to fulfill the purposes outlined in this policy, comply with legal obligations, and resolve disputes. Order data is retained for a minimum of 8 years as required by Indian tax and commercial regulations.</p>
-      </PolicySection>
-
-      <PolicySection title="Changes to This Policy">
-        <p>We may update this Privacy Policy periodically. Changes will be posted on this page with an updated "Last Updated" date. We encourage you to review this policy regularly.</p>
-      </PolicySection>
-
-      <PolicySection title="Contact">
+      </>
+    ),
+  },
+  {
+    id: 'data-retention',
+    icon: Clock,
+    title: 'Data Retention',
+    summary: 'We keep your data as long as needed. Order data is retained for 8 years per Indian tax law.',
+    content: (
+      <p>We retain your personal information for as long as necessary to fulfill the purposes outlined in this policy, comply with legal obligations, and resolve disputes. Order data is retained for a minimum of 8 years as required by Indian tax and commercial regulations.</p>
+    ),
+  },
+  {
+    id: 'changes',
+    icon: RefreshCw,
+    title: 'Changes to This Policy',
+    summary: 'We may update this policy. Changes will be posted here with an updated date.',
+    content: (
+      <p>We may update this Privacy Policy periodically. Changes will be posted on this page with an updated "Last Updated" date. We encourage you to review this policy regularly.</p>
+    ),
+  },
+  {
+    id: 'contact',
+    icon: Mail,
+    title: 'Contact',
+    summary: 'Reach our Data Protection Officer for any privacy-related questions.',
+    content: (
+      <>
         <p>For privacy-related questions or requests, contact our Data Protection Officer:</p>
-        <p className="font-medium text-surface-900 dark:text-surface-100">Email: privacy@akashcrackers.com | Phone: +91 98765 43210</p>
+        <p className="font-medium text-surface-900 dark:text-surface-100">
+          Email: privacy@akashcrackers.com<br />
+          Phone: +91 98765 43210
+        </p>
         <p>Akash Crackers, Sivakasi, Tamil Nadu, India — 626189</p>
-      </PolicySection>
-    </PolicyLayout>
+      </>
+    ),
+  },
+];
+
+export function PrivacyPage() {
+  return (
+    <>
+      <SEO
+        title="Privacy Policy"
+        description="Akash Crackers privacy policy. Learn how we collect, use, and protect your personal information when you use our website and services."
+        canonical="/privacy"
+      />
+      <PolicyLayout
+        title="Privacy Policy"
+        eyebrow="Your Privacy"
+        description="Learn how we collect, use, and protect your personal information when you use our services."
+        lastUpdated="February 1, 2026"
+        sections={sections}
+      />
+    </>
   );
 }
