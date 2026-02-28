@@ -1,6 +1,6 @@
 import {
   Heart, CheckCircle, XCircle, ListOrdered,
-  Clock, Repeat, Shield, Mail,
+  Clock, Repeat, Shield,
 } from 'lucide-react';
 import { PolicyLayout, type PolicySection } from '@/components/atoms/PolicyLayout.tsx';
 import { SEO } from '@/components/SEO.tsx';
