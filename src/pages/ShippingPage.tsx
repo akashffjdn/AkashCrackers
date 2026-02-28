@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import {
-  Truck, Clock, MapPin, Package, Shield,
+  Truck, Clock, MapPin, Package,
   Globe, Navigation, AlertTriangle,
 } from 'lucide-react';
 import { PolicyLayout, type PolicySection } from '@/components/atoms/PolicyLayout.tsx';
