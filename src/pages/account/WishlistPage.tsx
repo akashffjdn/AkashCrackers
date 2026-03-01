@@ -6,34 +6,49 @@ import { Button } from '@/components/atoms/Button.tsx';
 import { EmptyState } from '@/components/atoms/EmptyState.tsx';
 import { useAuthStore } from '@/store/auth.ts';
 import { useCartStore } from '@/store/cart.ts';
-import { getWishlist, removeFromWishlist } from '@/services/firestore.ts';
-import { products } from '@/data/products.ts';
+import { removeFromWishlist } from '@/services/firestore.ts';
+import api from '@/lib/api.ts';
 import { formatPrice } from '@/lib/utils.ts';
-import type { WishlistItem } from '@/types/index.ts';
+import type { Product } from '@/types/index.ts';
+
+function mapWishlistProduct(p: Record<string, unknown>): Product {
+  return {
+    ...p,
+    id: (p._id || p.id) as string,
+    isNew: (p.isNewArrival ?? p.isNew ?? false) as boolean,
+    category: (p.categorySlug || (typeof p.category === 'string' ? p.category : '')) as Product['category'],
+  } as Product;
+}
 
 export function WishlistPage() {
   const user = useAuthStore((s) => s.user);
   const addToCart = useCartStore((s) => s.addItem);
-  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    getWishlist(user.uid)
-      .then(setItems)
+    let cancelled = false;
+    setIsLoading(true);
+    (api.get('/wishlist') as Promise<Record<string, unknown>>)
+      .then((result) => {
+        if (cancelled) return;
+        const products = (result.products || result) as Record<string, unknown>[];
+        const mapped = (Array.isArray(products) ? products : [])
+          .filter((p) => p && typeof p === 'object' && (p._id || p.id))
+          .map(mapWishlistProduct);
+        setWishlistProducts(mapped);
+      })
       .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
   }, [user]);
 
   const handleRemove = async (productId: string) => {
     if (!user) return;
     await removeFromWishlist(user.uid, productId);
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+    setWishlistProducts((prev) => prev.filter((p) => p.id !== productId));
   };
-
-  const wishlistProducts = items
-    .map((item) => products.find((p) => p.id === item.productId))
-    .filter(Boolean);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>

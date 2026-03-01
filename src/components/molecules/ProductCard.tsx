@@ -36,7 +36,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       navigate('/login');
       return;
     }
-    toggleWishlist(user.uid, product.id);
+    toggleWishlist(product.id);
   };
 
   const discount = product.originalPrice

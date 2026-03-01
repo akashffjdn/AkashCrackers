@@ -1,17 +1,4 @@
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp,
-  writeBatch,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase.ts';
+import api from '@/lib/api.ts';
 import type {
   UserProfile,
   UserRole,
@@ -22,140 +9,123 @@ import type {
 } from '@/types/index.ts';
 
 // =====================
+// ID MAPPING HELPERS
+// =====================
+
+function mapAddress(a: Record<string, unknown>): Address {
+  return { ...a, id: (a._id || a.id) as string } as Address;
+}
+
+function mapOrder(o: Record<string, unknown>): Order {
+  const items = (o.items as Record<string, unknown>[]) || [];
+  return {
+    ...o,
+    id: (o._id || o.id) as string,
+    userId: (o.user || o.userId) as string,
+    items: items.map((item) => ({
+      ...item,
+      productId: (item.product || item.productId) as string,
+    })),
+  } as Order;
+}
+
+// =====================
 // USER PROFILE
 // =====================
 
-export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  const snap = await getDoc(doc(db, 'users', uid));
-  return snap.exists() ? (snap.data() as UserProfile) : null;
+export async function getUserProfile(_uid: string): Promise<UserProfile | null> {
+  return api.get('/auth/me');
 }
 
-export async function createUserProfile(profile: UserProfile) {
-  await setDoc(doc(db, 'users', profile.uid), {
-    ...profile,
-    role: 'user',
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+export async function createUserProfile(_profile: UserProfile): Promise<void> {
+  // No-op — registration is handled by POST /api/auth/register
 }
 
-export async function getUserRole(uid: string): Promise<UserRole> {
-  const snap = await getDoc(doc(db, 'users', uid));
-  return snap.exists() ? (snap.data().role ?? 'user') : 'user';
+export async function getUserRole(_uid: string): Promise<UserRole> {
+  const user: UserProfile = await api.get('/auth/me');
+  return user.role ?? 'user';
 }
 
 export async function updateUserProfile(
-  uid: string,
+  _uid: string,
   data: Partial<Pick<UserProfile, 'displayName' | 'phone' | 'photoURL'>>,
-) {
-  await updateDoc(doc(db, 'users', uid), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
+): Promise<void> {
+  await api.put('/auth/profile', data);
 }
 
 // =====================
 // ADDRESSES
 // =====================
 
-export async function getAddresses(uid: string): Promise<Address[]> {
-  const snap = await getDocs(collection(db, 'users', uid, 'addresses'));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Address);
+export async function getAddresses(_uid: string): Promise<Address[]> {
+  const data: Record<string, unknown>[] = await api.get('/addresses');
+  return (data || []).map(mapAddress);
 }
 
-export async function addAddress(uid: string, address: Omit<Address, 'id'>) {
-  const ref = doc(collection(db, 'users', uid, 'addresses'));
-  await setDoc(ref, address);
-  return ref.id;
+export async function addAddress(_uid: string, address: Omit<Address, 'id'>): Promise<string> {
+  const result: Record<string, unknown> = await api.post('/addresses', address);
+  return (result._id || result.id) as string;
 }
 
 export async function updateAddress(
-  uid: string,
+  _uid: string,
   addressId: string,
   data: Partial<Address>,
-) {
-  await updateDoc(doc(db, 'users', uid, 'addresses', addressId), data);
+): Promise<void> {
+  await api.put(`/addresses/${addressId}`, data);
 }
 
-export async function deleteAddress(uid: string, addressId: string) {
-  await deleteDoc(doc(db, 'users', uid, 'addresses', addressId));
+export async function deleteAddress(_uid: string, addressId: string): Promise<void> {
+  await api.delete(`/addresses/${addressId}`);
 }
 
 // =====================
 // ORDERS
 // =====================
 
-export async function getOrders(uid: string): Promise<Order[]> {
-  const snap = await getDocs(
-    query(collection(db, 'users', uid, 'orders'), orderBy('createdAt', 'desc')),
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
+export async function getOrders(_uid: string): Promise<Order[]> {
+  const result: Record<string, unknown> = await api.get('/orders');
+  const data = (result.data || result) as Record<string, unknown>[];
+  return (Array.isArray(data) ? data : []).map(mapOrder);
 }
 
 export async function getOrderById(
-  uid: string,
+  _uid: string,
   orderId: string,
 ): Promise<Order | null> {
-  const snap = await getDoc(doc(db, 'users', uid, 'orders', orderId));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Order) : null;
+  const result: Record<string, unknown> = await api.get(`/orders/${orderId}`);
+  return result ? mapOrder(result) : null;
 }
 
 export async function createOrder(
-  uid: string,
+  _uid: string,
   orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
-  customerName?: string,
-  customerEmail?: string,
+  _customerName?: string,
+  _customerEmail?: string,
 ): Promise<string> {
-  const userOrderRef = doc(collection(db, 'users', uid, 'orders'));
-  const topOrderRef = doc(db, 'orders', userOrderRef.id);
-  const batch = writeBatch(db);
-
-  const baseData = {
-    ...orderData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-
-  // Write to user subcollection
-  batch.set(userOrderRef, baseData);
-
-  // Write to top-level orders collection for admin queries
-  batch.set(topOrderRef, {
-    ...baseData,
-    customerName: customerName ?? '',
-    customerEmail: customerEmail ?? '',
-    notes: '',
-    statusHistory: [
-      {
-        status: orderData.status,
-        changedAt: new Date().toISOString(),
-        changedBy: 'system',
-      },
-    ],
-  });
-
-  await batch.commit();
-  return userOrderRef.id;
+  const result: Record<string, unknown> = await api.post('/orders', orderData);
+  return (result._id || result.id) as string;
 }
 
 // =====================
 // WISHLIST
 // =====================
 
-export async function getWishlist(uid: string): Promise<WishlistItem[]> {
-  const snap = await getDocs(collection(db, 'users', uid, 'wishlist'));
-  return snap.docs.map((d) => d.data() as WishlistItem);
+export async function getWishlist(_uid: string): Promise<WishlistItem[]> {
+  const result: Record<string, unknown> = await api.get('/wishlist');
+  const products = (result.products || result) as Record<string, unknown>[];
+  return (Array.isArray(products) ? products : []).map((p) => ({
+    productId: (p._id || p.id) as string,
+    addedAt: (p.addedAt as string) || new Date().toISOString(),
+  }));
 }
 
-export async function addToWishlist(uid: string, productId: string) {
-  await setDoc(doc(db, 'users', uid, 'wishlist', productId), {
-    productId,
-    addedAt: new Date().toISOString(),
-  });
+export async function addToWishlist(_uid: string, productId: string): Promise<void> {
+  await api.post(`/wishlist/${productId}`);
 }
 
-export async function removeFromWishlist(uid: string, productId: string) {
-  await deleteDoc(doc(db, 'users', uid, 'wishlist', productId));
+export async function removeFromWishlist(_uid: string, productId: string): Promise<void> {
+  await api.delete(`/wishlist/${productId}`);
 }
 
 // =====================
@@ -171,19 +141,19 @@ const defaultPrefs: NotificationPreferences = {
 };
 
 export async function getNotificationPrefs(
-  uid: string,
+  _uid: string,
 ): Promise<NotificationPreferences> {
-  const snap = await getDoc(doc(db, 'users', uid, 'preferences', 'notifications'));
-  return snap.exists()
-    ? (snap.data() as NotificationPreferences)
-    : defaultPrefs;
+  try {
+    const result: NotificationPreferences = await api.get('/notifications/preferences');
+    return result || defaultPrefs;
+  } catch {
+    return defaultPrefs;
+  }
 }
 
 export async function updateNotificationPrefs(
-  uid: string,
+  _uid: string,
   prefs: Partial<NotificationPreferences>,
-) {
-  await setDoc(doc(db, 'users', uid, 'preferences', 'notifications'), prefs, {
-    merge: true,
-  });
+): Promise<void> {
+  await api.put('/notifications/preferences', prefs);
 }

@@ -29,6 +29,7 @@ const LoginPage = lazy(() => import('@/pages/auth/LoginPage.tsx').then((m) => ({
 const SignupPage = lazy(() => import('@/pages/auth/SignupPage.tsx').then((m) => ({ default: m.SignupPage })));
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage.tsx').then((m) => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage.tsx').then((m) => ({ default: m.ResetPasswordPage })));
+const OAuthCallbackPage = lazy(() => import('@/pages/auth/OAuthCallbackPage.tsx').then((m) => ({ default: m.OAuthCallbackPage })));
 
 // Account pages
 const AccountLayout = lazy(() => import('@/layouts/AccountLayout.tsx').then((m) => ({ default: m.AccountLayout })));
@@ -86,6 +87,7 @@ export default function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
           </Route>
 
           {/* Main site */}

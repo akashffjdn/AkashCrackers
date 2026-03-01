@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, Grid3X3, LayoutList } from 'lucide-react';
@@ -7,8 +7,10 @@ import { SectionHeading } from '@/components/atoms/SectionHeading.tsx';
 import { CategoryChip } from '@/components/molecules/CategoryChip.tsx';
 import { ProductCard } from '@/components/molecules/ProductCard.tsx';
 import { SEO } from '@/components/SEO.tsx';
-import { products, categories } from '@/data/products.ts';
+import { getProducts, getCategories } from '@/services/products.ts';
+import type { CategoryItem } from '@/services/products.ts';
 import { cn } from '@/lib/utils.ts';
+import type { Product } from '@/types/index.ts';
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
 
@@ -18,6 +20,32 @@ export function ShopPage() {
   const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{ id: string; label: string; count: number }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    Promise.all([getProducts(), getCategories()])
+      .then(([productsRes, categoriesRes]) => {
+        if (cancelled) return;
+        setProducts(productsRes.data);
+        const allCount = productsRes.total || productsRes.data.length;
+        const cats: { id: string; label: string; count: number }[] = [
+          { id: 'all', label: 'All Products', count: allCount },
+          ...categoriesRes.map((c: CategoryItem) => ({
+            id: c.slug,
+            label: c.name,
+            count: c.productCount,
+          })),
+        ];
+        setCategories(cats);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleCategoryChange = (id: string) => {
     setActiveCategory(id);
@@ -138,7 +166,11 @@ export function ShopPage() {
           </div>
 
           {/* Product Grid */}
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-2 border-surface-300 border-t-brand-500 rounded-full animate-spin" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

@@ -8,6 +8,7 @@ import { useCartStore } from '@/store/cart.ts';
 import { useAuthStore } from '@/store/auth.ts';
 import { useRazorpay } from '@/hooks/useRazorpay.ts';
 import { createOrder } from '@/services/firestore.ts';
+import api from '@/lib/api.ts';
 import { siteConfig } from '@/config/site.ts';
 import { formatPrice, cn } from '@/lib/utils.ts';
 import type { OrderItem } from '@/types/index.ts';
@@ -117,66 +118,85 @@ export function CheckoutPage() {
       return;
     }
 
-    await openPayment({
-      key: razorpayKeyId,
-      amount: orderTotal * 100,
-      currency: 'INR',
-      name: siteConfig.name,
-      description: `Order — ${items.length} item${items.length > 1 ? 's' : ''}`,
-      prefill: {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        contact: formData.phone,
-      },
-      theme: {
-        color: '#F59E0B',
-      },
-      handler: async (response) => {
-        setIsSubmitting(true);
-        try {
-          const orderItems: OrderItem[] = items.map((item) => ({
-            productId: item.product.id,
-            name: item.product.name,
-            slug: item.product.slug,
-            image: item.product.images[0],
-            price: item.product.price,
-            quantity: item.quantity,
-          }));
+    try {
+      // Step 1: Create Razorpay order on backend (tamper-proof amount)
+      const paymentOrder: { id: string; amount: number; currency: string } =
+        await api.post('/payments/create-order', { amount: orderTotal });
 
-          const orderId = await createOrder(user.uid, {
-            userId: user.uid,
-            items: orderItems,
-            subtotal: totalPrice(),
-            shipping: shippingCost,
-            total: orderTotal,
-            status: 'pending',
-            shippingAddress: {
-              id: '',
-              label: 'Checkout',
-              fullName: `${formData.firstName} ${formData.lastName}`,
-              phone: formData.phone,
-              addressLine1: formData.address,
-              city: formData.city,
-              state: formData.state,
-              pincode: formData.pincode,
-              isDefault: false,
-            },
-            paymentMethod: 'Razorpay',
-            paymentId: response.razorpay_payment_id,
-          });
+      // Step 2: Open Razorpay with server-generated order
+      await openPayment({
+        key: razorpayKeyId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency || 'INR',
+        name: siteConfig.name,
+        description: `Order — ${items.length} item${items.length > 1 ? 's' : ''}`,
+        order_id: paymentOrder.id,
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#F59E0B',
+        },
+        handler: async (response) => {
+          setIsSubmitting(true);
+          try {
+            // Step 3: Verify payment signature on backend
+            await api.post('/payments/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
 
-          clearCart();
-          navigate(`/order-confirmation/${orderId}`);
-        } catch {
-          setFormErrors({ submit: 'Failed to create order. Please contact support.' });
-        } finally {
-          setIsSubmitting(false);
-        }
-      },
-      modal: {
-        confirm_close: true,
-      },
-    });
+            // Step 4: Create order in database
+            const orderItems: OrderItem[] = items.map((item) => ({
+              productId: item.product.id,
+              name: item.product.name,
+              slug: item.product.slug,
+              image: item.product.images[0],
+              price: item.product.price,
+              quantity: item.quantity,
+            }));
+
+            const orderId = await createOrder(user.uid, {
+              userId: user.uid,
+              items: orderItems,
+              subtotal: totalPrice(),
+              shipping: shippingCost,
+              total: orderTotal,
+              status: 'pending',
+              shippingAddress: {
+                id: '',
+                label: 'Checkout',
+                fullName: `${formData.firstName} ${formData.lastName}`,
+                phone: formData.phone,
+                addressLine1: formData.address,
+                city: formData.city,
+                state: formData.state,
+                pincode: formData.pincode,
+                isDefault: false,
+              },
+              paymentMethod: 'razorpay',
+              paymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+            });
+
+            clearCart();
+            navigate(`/order-confirmation/${orderId}`);
+          } catch {
+            setFormErrors({ submit: 'Payment verification failed. Please contact support.' });
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        modal: {
+          confirm_close: true,
+        },
+      });
+    } catch (err) {
+      setFormErrors({ submit: err instanceof Error ? err.message : 'Payment failed. Please try again.' });
+    }
   };
 
   if (items.length === 0) {

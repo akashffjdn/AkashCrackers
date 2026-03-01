@@ -10,7 +10,8 @@ import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
 import { SEO } from '@/components/SEO.tsx';
 import { useCartStore } from '@/store/cart.ts';
-import { products, categories } from '@/data/products.ts';
+import { getProducts, getCategories } from '@/services/products.ts';
+import type { CategoryItem } from '@/services/products.ts';
 import { formatPrice, cn } from '@/lib/utils.ts';
 import type { Product } from '@/types/index.ts';
 
@@ -82,6 +83,9 @@ export function QuickOrderPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [orderItems, setOrderItems] = useState<Map<string, QuickOrderItem>>(new Map());
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{ id: string; label: string; count: number }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
 
@@ -89,6 +93,29 @@ export function QuickOrderPage() {
   const sortRef = useRef<HTMLDivElement>(null);
   useClickOutside(filterRef, () => setShowFilters(false));
   useClickOutside(sortRef, () => setShowSort(false));
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    Promise.all([getProducts(), getCategories()])
+      .then(([productsRes, categoriesRes]) => {
+        if (cancelled) return;
+        setProducts(productsRes.data);
+        const allCount = productsRes.total || productsRes.data.length;
+        const cats: { id: string; label: string; count: number }[] = [
+          { id: 'all', label: 'All Products', count: allCount },
+          ...categoriesRes.map((c: CategoryItem) => ({
+            id: c.slug,
+            label: c.name,
+            count: c.productCount,
+          })),
+        ];
+        setCategories(cats);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -441,6 +468,11 @@ export function QuickOrderPage() {
           </p>
 
           {/* Product Table */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-2 border-surface-300 border-t-brand-500 rounded-full animate-spin" />
+            </div>
+          ) : (
           <div className="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden">
             {/* Table Header */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-surface-50 dark:bg-surface-850 border-b border-surface-200 dark:border-surface-800 text-label font-bold uppercase tracking-wider text-surface-500">
@@ -657,6 +689,7 @@ export function QuickOrderPage() {
               </div>
             )}
           </div>
+          )}
         </div>
       </Container>
 

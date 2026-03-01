@@ -546,7 +546,7 @@ export function AdminSettingsPage() {
                       <Shield size={16} className="text-green-600" />
                     </div>
                     <div>
-                      <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">Firebase Authentication</p>
+                      <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">JWT Authentication</p>
                       <p className="text-caption text-surface-400">Email/password and Google sign-in enabled</p>
                     </div>
                   </div>
@@ -555,7 +555,7 @@ export function AdminSettingsPage() {
                       <Shield size={16} className="text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">Firestore Security Rules</p>
+                      <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">API Security</p>
                       <p className="text-caption text-surface-400">Role-based access control enforced</p>
                     </div>
                   </div>
@@ -565,7 +565,7 @@ export function AdminSettingsPage() {
                     </div>
                     <div>
                       <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">Two-Factor Authentication</p>
-                      <p className="text-caption text-surface-400">Configure in Firebase Console</p>
+                      <p className="text-caption text-surface-400">Not yet configured</p>
                     </div>
                   </div>
                 </div>

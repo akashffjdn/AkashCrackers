@@ -1,16 +1,73 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/atoms/Button.tsx';
+import api from '@/lib/api.ts';
+
+interface HeroContent {
+  eyebrow: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  secondaryCtaText: string;
+  secondaryCtaLink: string;
+  image: string;
+  stats: { value: string; label: string }[];
+}
+
+const defaultHero: HeroContent = {
+  eyebrow: 'Diwali 2026 Collection Now Live',
+  title: 'Light Up the',
+  highlight: 'Night Sky',
+  subtitle: 'Premium-crafted fireworks for celebrations that deserve perfection. From elegant sparklers to breathtaking aerial shows.',
+  ctaText: 'Shop Collection',
+  ctaLink: '/shop',
+  secondaryCtaText: 'Diwali Specials',
+  secondaryCtaLink: '/shop?occasion=diwali',
+  image: 'https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=80',
+  stats: [
+    { value: '50K+', label: 'Happy Customers' },
+    { value: '500+', label: 'Premium Products' },
+    { value: '25+', label: 'Years of Trust' },
+  ],
+};
 
 export function HeroSection() {
+  const [hero, setHero] = useState<HeroContent>(defaultHero);
+
+  useEffect(() => {
+    (api.get('/content/hero-section') as Promise<Record<string, unknown> | null>)
+      .then((result) => {
+        if (!result) return;
+        const data = (result.data || result) as Record<string, unknown>;
+        if (data && typeof data === 'object' && data.title) {
+          setHero({
+            eyebrow: (data.eyebrow as string) || defaultHero.eyebrow,
+            title: (data.title as string) || defaultHero.title,
+            highlight: (data.highlight as string) || defaultHero.highlight,
+            subtitle: (data.subtitle as string) || defaultHero.subtitle,
+            ctaText: (data.ctaText as string) || defaultHero.ctaText,
+            ctaLink: (data.ctaLink as string) || defaultHero.ctaLink,
+            secondaryCtaText: (data.secondaryCtaText as string) || defaultHero.secondaryCtaText,
+            secondaryCtaLink: (data.secondaryCtaLink as string) || defaultHero.secondaryCtaLink,
+            image: (data.image as string) || defaultHero.image,
+            stats: Array.isArray(data.stats) ? data.stats as { value: string; label: string }[] : defaultHero.stats,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=80"
-          srcSet="https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=640&q=75 640w, https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1024&q=80 1024w, https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=1920&q=80 1920w"
+          src={hero.image}
+          srcSet={`${hero.image.replace('w=1920', 'w=640').replace('q=80', 'q=75')} 640w, ${hero.image.replace('w=1920', 'w=1024')} 1024w, ${hero.image} 1920w`}
           sizes="100vw"
           alt="Fireworks display"
           width={1920}
@@ -60,7 +117,7 @@ export function HeroSection() {
         >
           <Sparkles size={16} className="text-brand-400" />
           <span className="text-body-sm font-medium text-brand-300">
-            Diwali 2026 Collection Now Live
+            {hero.eyebrow}
           </span>
         </motion.div>
 
@@ -71,8 +128,8 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="font-display font-black text-display-md sm:text-display-lg lg:text-display-xl text-white leading-tight"
         >
-          Light Up the{' '}
-          <span className="text-gradient-brand">Night Sky</span>
+          {hero.title}{' '}
+          <span className="text-gradient-brand">{hero.highlight}</span>
         </motion.h1>
 
         {/* Subtitle */}
@@ -82,8 +139,7 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-6 text-body-lg sm:text-heading-sm text-white/70 max-w-2xl mx-auto text-balance"
         >
-          Premium-crafted fireworks for celebrations that deserve perfection.
-          From elegant sparklers to breathtaking aerial shows.
+          {hero.subtitle}
         </motion.p>
 
         {/* CTAs */}
@@ -93,15 +149,15 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.8 }}
           className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
         >
-          <Link to="/shop">
+          <Link to={hero.ctaLink}>
             <Button size="xl" className="group">
-              Shop Collection
+              {hero.ctaText}
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
-          <Link to="/shop?occasion=diwali">
+          <Link to={hero.secondaryCtaLink}>
             <Button variant="outline" size="xl" className="border-white/30 text-white hover:border-brand-400 hover:text-brand-400">
-              Diwali Specials
+              {hero.secondaryCtaText}
             </Button>
           </Link>
         </motion.div>
@@ -113,11 +169,7 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 1.2 }}
           className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto"
         >
-          {[
-            { value: '50K+', label: 'Happy Customers' },
-            { value: '500+', label: 'Premium Products' },
-            { value: '25+', label: 'Years of Trust' },
-          ].map((stat) => (
+          {hero.stats.map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="font-display font-bold text-heading-md sm:text-heading-lg text-brand-400">
                 {stat.value}

@@ -58,18 +58,12 @@ export function AdminProfilePage() {
     setIsChangingPassword(true);
     setPasswordMessage(null);
     try {
-      const { updatePassword, EmailAuthProvider, reauthenticateWithCredential } = await import('firebase/auth');
-      const { auth } = await import('@/lib/firebase.ts');
-      const currentUser = auth.currentUser;
-      if (currentUser && currentUser.email) {
-        const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
-        await reauthenticateWithCredential(currentUser, credential);
-        await updatePassword(currentUser, newPassword);
-        setPasswordMessage({ text: 'Password changed successfully', type: 'success' });
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }
+      const { changePassword } = await import('@/services/auth.ts');
+      await changePassword(currentPassword, newPassword);
+      setPasswordMessage({ text: 'Password changed successfully', type: 'success' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     } catch {
       setPasswordMessage({ text: 'Failed. Check your current password.', type: 'error' });
     } finally {
@@ -119,7 +113,7 @@ export function AdminProfilePage() {
                   <div>
                     <label className={labelClass}>Email</label>
                     <input type="email" value={user?.email || ''} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
-                    <p className="text-caption text-surface-400 mt-1">Managed by Firebase Auth</p>
+                    <p className="text-caption text-surface-400 mt-1">Email cannot be changed</p>
                   </div>
                   <div>
                     <label className={labelClass}>Phone</label>
@@ -250,7 +244,7 @@ export function AdminProfilePage() {
                   <Shield size={14} className="text-green-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">Firebase Auth</p>
+                  <p className="text-body-sm font-medium text-surface-700 dark:text-surface-200">Authenticated</p>
                   <p className="text-caption text-surface-400">Email & Google sign-in</p>
                 </div>
               </div>

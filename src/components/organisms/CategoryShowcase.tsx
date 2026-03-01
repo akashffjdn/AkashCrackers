@@ -1,11 +1,13 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Container } from '@/components/atoms/Container.tsx';
 import { SectionHeading } from '@/components/atoms/SectionHeading.tsx';
+import { getCategories, type CategoryItem } from '@/services/products.ts';
 import { cn } from '@/lib/utils.ts';
 
-const showcaseCategories = [
+const defaultCategories = [
   {
     title: 'Aerial Shells',
     description: 'Sky-painting masterpieces',
@@ -36,7 +38,27 @@ const showcaseCategories = [
   },
 ];
 
+function mapCategories(cats: CategoryItem[]) {
+  return cats.slice(0, 4).map((c, i) => ({
+    title: c.name,
+    description: c.description || '',
+    image: c.image || defaultCategories[i]?.image || '',
+    href: `/shop?category=${c.slug}`,
+    span: i === 0 ? 'lg:col-span-2 lg:row-span-2' : i === 3 ? 'lg:col-span-2' : '',
+  }));
+}
+
 export function CategoryShowcase() {
+  const [categories, setCategories] = useState(defaultCategories);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats) => {
+        if (cats.length > 0) setCategories(mapCategories(cats));
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="section-padding bg-white dark:bg-surface-900">
       <Container size="wide">
@@ -47,7 +69,7 @@ export function CategoryShowcase() {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 auto-rows-[240px] lg:auto-rows-[200px]">
-          {showcaseCategories.map((category, index) => (
+          {categories.map((category, index) => (
             <motion.div
               key={category.title}
               initial={{ opacity: 0, y: 30 }}

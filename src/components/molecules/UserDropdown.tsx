@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { User, Package, Heart, MapPin, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { Avatar } from '@/components/atoms/Avatar.tsx';
 import { useAuthStore } from '@/store/auth.ts';
-// signOutUser is dynamically imported to keep Firebase out of the initial bundle
+// signOutUser is dynamically imported to keep auth service out of the initial bundle
 
 interface UserDropdownProps {
   isOpen: boolean;

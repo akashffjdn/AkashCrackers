@@ -13,7 +13,7 @@ import { UserDropdown } from '@/components/molecules/UserDropdown.tsx';
 import { useScrollDirection } from '@/hooks/useScrollDirection.ts';
 import { useCartStore } from '@/store/cart.ts';
 import { useAuthStore } from '@/store/auth.ts';
-// signOutUser is dynamically imported to keep Firebase out of the initial bundle
+// signOutUser is dynamically imported to keep auth service out of the initial bundle
 import { mainNavLinks } from '@/config/navigation.ts';
 import { siteConfig } from '@/config/site.ts';
 import { cn } from '@/lib/utils.ts';

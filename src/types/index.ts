@@ -152,6 +152,7 @@ export interface Order {
   shippingAddress: Address;
   paymentMethod: string;
   paymentId?: string;
+  razorpayOrderId?: string;
   trackingId?: string;
   createdAt: string;
   updatedAt: string;

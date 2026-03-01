@@ -137,6 +137,8 @@ export interface PaginatedResult<T> {
   data: T[];
   total: number;
   hasMore: boolean;
+  page?: number;
+  totalPages?: number;
 }
 
 // =====================

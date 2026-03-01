@@ -8,6 +8,7 @@ import { SocialLoginButton } from '@/components/molecules/SocialLoginButton.tsx'
 import { PasswordStrengthBar } from '@/components/molecules/PasswordStrengthBar.tsx';
 import { signUpWithEmail, signInWithGoogle } from '@/services/auth.ts';
 import { useAuthStore } from '@/store/auth.ts';
+import { useWishlistStore } from '@/store/wishlist.ts';
 
 export function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
@@ -17,6 +18,7 @@ export function SignupPage() {
   const [agreed, setAgreed] = useState(false);
   const navigate = useNavigate();
   const setUser = useAuthStore((s) => s.setUser);
+  const fetchWishlist = useWishlistStore((s) => s.fetchWishlist);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -41,35 +43,28 @@ export function SignupPage() {
 
     setIsLoading(true);
     try {
-      const user = await signUpWithEmail(form.email, form.password, form.name);
+      const user = await signUpWithEmail(form.email, form.password, form.name, form.phone);
       setUser(user);
+      fetchWishlist();
       navigate('/account', { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('email-already-in-use')) {
+      if (msg.includes('already registered') || msg.includes('email-already-in-use')) {
         setError('An account with this email already exists');
-      } else if (msg.includes('weak-password')) {
+      } else if (msg.includes('weak-password') || msg.includes('at least')) {
         setError('Password is too weak');
       } else {
-        setError('Something went wrong. Please try again.');
+        setError(msg || 'Something went wrong. Please try again.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogle = () => {
     setError('');
     setIsGoogleLoading(true);
-    try {
-      const user = await signInWithGoogle();
-      setUser(user);
-      navigate('/account', { replace: true });
-    } catch {
-      setError('Google sign-in failed. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    signInWithGoogle(); // Triggers redirect — page unloads
   };
 
   return (

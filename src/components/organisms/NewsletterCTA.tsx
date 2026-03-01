@@ -1,12 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Container } from '@/components/atoms/Container.tsx';
 import { Button } from '@/components/atoms/Button.tsx';
 import { Send } from 'lucide-react';
+import api from '@/lib/api.ts';
+
+interface NewsletterContent {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+}
+
+const defaultContent: NewsletterContent = {
+  eyebrow: 'Stay Updated',
+  title: 'Get Early Access to Seasonal Collections',
+  subtitle: 'Join 25,000+ celebration enthusiasts. Be the first to know about new arrivals, exclusive deals, and seasonal offers.',
+};
 
 export function NewsletterCTA() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [content, setContent] = useState<NewsletterContent>(defaultContent);
+
+  useEffect(() => {
+    (api.get('/content/newsletter-cta') as Promise<Record<string, unknown> | null>)
+      .then((result) => {
+        if (!result) return;
+        const data = (result.data || result) as Record<string, unknown>;
+        if (data && typeof data === 'object' && data.title) {
+          setContent({
+            eyebrow: (data.eyebrow as string) || defaultContent.eyebrow,
+            title: (data.title as string) || defaultContent.title,
+            subtitle: (data.subtitle as string) || defaultContent.subtitle,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +60,13 @@ export function NewsletterCTA() {
           className="relative py-20 lg:py-28 text-center"
         >
           <span className="inline-block mb-4 text-label font-bold uppercase tracking-widest text-brand-400">
-            Stay Updated
+            {content.eyebrow}
           </span>
           <h2 className="font-display font-bold text-display-sm sm:text-display-md text-white text-balance">
-            Get Early Access to Seasonal Collections
+            {content.title}
           </h2>
           <p className="mt-4 text-body-lg text-white/60 max-w-xl mx-auto">
-            Join 25,000+ celebration enthusiasts. Be the first to know about new arrivals, exclusive deals, and seasonal offers.
+            {content.subtitle}
           </p>
 
           {submitted ? (

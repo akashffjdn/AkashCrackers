@@ -85,7 +85,7 @@ export function AdminBillingPage() {
     (async () => {
       try {
         const { getActiveProducts, getSiteSettings } = await import('@/services/admin.ts');
-        setProducts(getActiveProducts());
+        setProducts(await getActiveProducts());
         const settings = await getSiteSettings();
         if (settings?.shippingRates?.packagingFee) {
           setPackagingFeeAmount(settings.shippingRates.packagingFee);

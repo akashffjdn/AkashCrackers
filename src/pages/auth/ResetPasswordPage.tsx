@@ -9,7 +9,7 @@ import { confirmReset } from '@/services/auth.ts';
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
-  const oobCode = searchParams.get('oobCode') ?? '';
+  const oobCode = searchParams.get('token') ?? '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');

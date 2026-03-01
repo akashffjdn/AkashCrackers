@@ -16,8 +16,9 @@ import { productSchema, breadcrumbSchema } from '@/lib/seo.ts';
 import { useCartStore } from '@/store/cart.ts';
 import { useAuthStore } from '@/store/auth.ts';
 import { useWishlistStore } from '@/store/wishlist.ts';
-import { products } from '@/data/products.ts';
+import { getProductBySlug, getProducts } from '@/services/products.ts';
 import { formatPrice, calculateDiscount, cn, getYouTubeId } from '@/lib/utils.ts';
+import type { Product } from '@/types/index.ts';
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';
 import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 
@@ -47,6 +48,35 @@ export function ProductPage() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [videoActive, setVideoActive] = useState(false);
+
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    setIsLoading(true);
+    setProduct(null);
+    setSelectedImage(0);
+    setQuantity(1);
+    getProductBySlug(slug)
+      .then((p) => {
+        if (cancelled) return;
+        setProduct(p);
+        if (p) {
+          getProducts({ category: p.category, limit: 5 })
+            .then((res) => {
+              if (cancelled) return;
+              setRelatedProducts(res.data.filter((rp) => rp.id !== p.id).slice(0, 4));
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [slug]);
 
   useEffect(() => {
     const el = ctaRef.current;
@@ -57,9 +87,35 @@ export function ProductPage() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [product]);
 
-  const product = products.find((p) => p.slug === slug);
+  const videoId = product?.videoUrl ? getYouTubeId(product.videoUrl) : null;
+  const mediaCount = product ? product.images.length + (videoId ? 1 : 0) : 0;
+  const videoIndex = videoId ? (product?.images.length ?? 0) : -1;
+  const isVideoSelected = selectedImage === videoIndex;
+
+  // Reset video active state when navigating away from video slide
+  useEffect(() => {
+    if (!isVideoSelected) setVideoActive(false);
+  }, [isVideoSelected]);
+
+  const jsonLd = useMemo(() => product ? [
+    productSchema(product),
+    breadcrumbSchema([
+      { name: 'Home', url: '/' },
+      { name: 'Shop', url: '/shop' },
+      { name: product.category.replace('-', ' '), url: `/shop?category=${product.category}` },
+      { name: product.name, url: `/product/${product.slug}` },
+    ]),
+  ] : [], [product]);
+
+  if (isLoading) {
+    return (
+      <div className="pt-24 min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-surface-300 border-t-brand-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -90,7 +146,7 @@ export function ProductPage() {
       navigate('/login');
       return;
     }
-    toggleWishlist(user.uid, product.id);
+    toggleWishlist(product.id);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -118,31 +174,6 @@ export function ProductPage() {
   const noise = noiseLevelConfig[product.noiseLevel];
   const safety = safetyConfig[product.safetyRating];
   const NoiseIcon = noise.icon;
-
-  const videoId = product.videoUrl ? getYouTubeId(product.videoUrl) : null;
-  const mediaCount = product.images.length + (videoId ? 1 : 0);
-  const videoIndex = videoId ? product.images.length : -1;
-  const isVideoSelected = selectedImage === videoIndex;
-  const [videoActive, setVideoActive] = useState(false);
-
-  // Reset video active state when navigating away from video slide
-  useEffect(() => {
-    if (!isVideoSelected) setVideoActive(false);
-  }, [isVideoSelected]);
-
-  const relatedProducts = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
-
-  const jsonLd = useMemo(() => [
-    productSchema(product),
-    breadcrumbSchema([
-      { name: 'Home', url: '/' },
-      { name: 'Shop', url: '/shop' },
-      { name: product.category.replace('-', ' '), url: `/shop?category=${product.category}` },
-      { name: product.name, url: `/product/${product.slug}` },
-    ]),
-  ], [product]);
 
   return (
     <div className="pt-16 lg:pt-18">

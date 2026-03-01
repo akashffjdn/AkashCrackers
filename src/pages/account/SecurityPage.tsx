@@ -33,7 +33,7 @@ export function SecurityPage() {
     }
     setIsLoading(true);
     try {
-      await changePassword(form.newPassword);
+      await changePassword(form.currentPassword, form.newPassword);
       setIsSaved(true);
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch {

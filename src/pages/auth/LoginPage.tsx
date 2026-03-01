@@ -7,6 +7,7 @@ import { Button } from '@/components/atoms/Button.tsx';
 import { SocialLoginButton } from '@/components/molecules/SocialLoginButton.tsx';
 import { signInWithEmail, signInWithGoogle } from '@/services/auth.ts';
 import { useAuthStore } from '@/store/auth.ts';
+import { useWishlistStore } from '@/store/wishlist.ts';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,6 +18,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setUser = useAuthStore((s) => s.setUser);
+  const fetchWishlist = useWishlistStore((s) => s.fetchWishlist);
 
   const redirectTo = (location.state as { from?: string })?.from ?? '/account';
 
@@ -27,33 +29,36 @@ export function LoginPage() {
     try {
       const user = await signInWithEmail(email, password);
       setUser(user);
+      fetchWishlist();
       navigate(redirectTo, { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Login failed';
-      if (msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
+      if (
+        msg.includes('Invalid email or password') ||
+        msg.includes('invalid-credential') ||
+        msg.includes('wrong-password') ||
+        msg.includes('user-not-found')
+      ) {
         setError('Incorrect email or password');
+      } else if (msg.includes('deactivated')) {
+        setError('Your account has been deactivated. Please contact support.');
+      } else if (msg.includes('sign in with Google')) {
+        setError('This account uses Google login. Please sign in with Google.');
       } else if (msg.includes('too-many-requests')) {
         setError('Too many attempts. Please try again later.');
       } else {
-        setError('Something went wrong. Please try again.');
+        setError(msg || 'Something went wrong. Please try again.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogle = () => {
     setError('');
     setIsGoogleLoading(true);
-    try {
-      const user = await signInWithGoogle();
-      setUser(user);
-      navigate(redirectTo, { replace: true });
-    } catch {
-      setError('Google sign-in failed. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    localStorage.setItem('akash-crackers-oauth-redirect', redirectTo);
+    signInWithGoogle(); // Triggers redirect — page unloads
   };
 
   return (
