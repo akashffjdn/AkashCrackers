@@ -80,7 +80,7 @@ export function ShopPage() {
     }
 
     return result;
-  }, [activeCategory, sortBy]);
+  }, [products, activeCategory, sortBy]);
 
   return (
     <div className="pt-16 lg:pt-18">
